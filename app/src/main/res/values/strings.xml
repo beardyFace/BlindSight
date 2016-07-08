@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">GPSTest</string>
+    <string name="title_activity_wearable_main">WearableMainActivity</string>
+</resources>
