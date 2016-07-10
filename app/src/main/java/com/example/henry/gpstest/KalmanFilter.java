@@ -1,10 +1,13 @@
 package com.example.henry.gpstest;
 
+import android.location.Location;
+
 public class KalmanFilter {
     private final float MinAccuracy = 1;
 
     private float Q_metres_per_second;
 
+    private String provider;
     private long timeStamp_milliseconds;
     private double lat;
     private double lng;
@@ -38,6 +41,14 @@ public class KalmanFilter {
         this.timeStamp_milliseconds =TimeStamp_milliseconds;
     }
 
+    public Location returnLocation(){
+        Location location = new Location(this.provider);
+        location.setLatitude(get_lat());
+        location.setLongitude(get_lng());
+        location.setAccuracy(get_accuracy());
+        return location;
+    }
+
     /// <summary>
     /// Kalman filter processing for lattitude and longitude
     /// </summary>
@@ -46,7 +57,13 @@ public class KalmanFilter {
     /// <param name="accuracy">measurement of 1 standard deviation error in metres</param>
     /// <param name="timeStamp_milliseconds">time of measurement</param>
     /// <returns>new state</returns>
-    public void process(double lat_measurement, double lng_measurement, float accuracy, long timeStamp_milliseconds) {
+    public void process(Location location){
+        double lat_measurement = location.getLatitude();
+        double lng_measurement = location.getLongitude();
+        float accuracy = location.getAccuracy();
+        long timeStamp_milliseconds = location.getTime();
+        this.provider = location.getProvider();
+
         if (accuracy < MinAccuracy) accuracy = MinAccuracy;
         if (variance < 0) {
             // if variance < 0, object is unitialised, so initialise with current values

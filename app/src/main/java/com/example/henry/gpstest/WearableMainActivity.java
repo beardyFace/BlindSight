@@ -43,7 +43,7 @@ public class WearableMainActivity extends Activity implements
     private EditText text;
     private Button tag_loc;
 
-    private Location init_location;
+    private Location tagged_location;
 
     public static final int ACCURACY_DECAYS_TIME = 1; // Metres per second
 
@@ -51,27 +51,25 @@ public class WearableMainActivity extends Activity implements
 
     protected static final int REQUEST_CHECK_SETTINGS = 0x1;
 
-    private boolean pushed = false;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wearable_main);
 
+        //TODO:
+        // As the client is blind a GUI interface is not useful.
+        // To be replaced by "accelerometer command" readings based on user testing with client
         tag_loc = (Button) findViewById(R.id.geoButton);
         tag_loc.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                text.setText(""+pushed);
-                pushed = !pushed;
+                tagLocation();
             }
         });
 
         text = (EditText) findViewById(R.id.editText);
-        text.setText("Hello People");
+        text.setText("Connecting to GPS");
 
-        // ATTENTION: This "addApi(AppIndex.API)"was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
 //                .addApi(Wearable.API)  // used for data layer API
@@ -82,8 +80,7 @@ public class WearableMainActivity extends Activity implements
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
     }
 
-    public void settingsRequest()
-    {
+    public void settingsRequest() {
         LocationRequest locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         locationRequest.setInterval(1000);
@@ -96,7 +93,7 @@ public class WearableMainActivity extends Activity implements
         PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
         result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
             @Override
-            public void onResult(LocationSettingsResult result) {
+            public void onResult(@NonNull LocationSettingsResult result) {
                 final Status status = result.getStatus();
                 final LocationSettingsStates state = result.getLocationSettingsStates();
                 state.isGpsPresent();
@@ -160,7 +157,7 @@ public class WearableMainActivity extends Activity implements
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
-            text.setText("Failed to connect\n"+values);
+            display("Failed to connect\n"+values);
             return;
         }
 
@@ -176,7 +173,7 @@ public class WearableMainActivity extends Activity implements
 
         LocationRequest locationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(1000)        // 10 seconds, in milliseconds
+                .setInterval(1000)        // 1 seconds, in milliseconds
                 .setFastestInterval(1000); // 1 second, in milliseconds
 
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, locationRequest, this);
@@ -191,7 +188,7 @@ public class WearableMainActivity extends Activity implements
     @Override
     protected void onPause() {
         super.onPause();
-        mGoogleApiClient.disconnect();
+//        mGoogleApiClient.disconnect();
     }
 
     @Override
@@ -200,44 +197,44 @@ public class WearableMainActivity extends Activity implements
 //        printLocation(mLastLocation);
     }
 
-    private boolean hasGps() {
-        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS);
-    }
+    //Outdated mode of GPS, best practise is to use GPSFused via Google
+//    private boolean hasGps() {
+//        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS);
+//    }
 
     @Override
     public void onConnectionSuspended(int i) {
-        text.setText("Suspended: "+i);
+        display("Suspended: "+i);
     }
 
     @Override
     public void onLocationChanged(Location location) {
 
-        if(init_location == null) {
-            init_location = setTagLocation(location);
-            if(init_location == null)
+        if(tag_location) {
+            if(!setTagLocation(location))
                 return;
         }
 
         Location raw_location = new Location(location);
 
-        kalmanFilter.process(location.getLatitude(), location.getLongitude(), location.getAccuracy(), location.getTime());
+        kalmanFilter.process(location);
+        location = kalmanFilter.returnLocation();
 
-        location.setLatitude(kalmanFilter.get_lat());
-        location.setLongitude(kalmanFilter.get_lng());
-        location.setAccuracy(kalmanFilter.get_accuracy());
-
-        float dist = location.distanceTo(init_location);
-
-        String value = "Initial:\n"+printLocation(init_location)+"\n";
-               value+= "New:\n"+printLocation(location)+"\n";
-               value+= "Distance: "+dist+"\n";
-               value+= "Raw:\n"+printLocation(raw_location);
+        //Print data to screen for debugging
+        String value = "Data:\n";
+        if(tagged_location != null) {
+            value += "Tagged:\n" + printLocation(tagged_location) + "\n";
+            float dist = location.distanceTo(tagged_location);
+            value+= "Distance from: "+dist+"\n";
+        }
+        value+= "New:\n"+printLocation(location)+"\n";
+        value+= "Raw:\n"+printLocation(raw_location);
         display(value);
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        text.setText("Failed: "+connectionResult);
+        display("Failed: "+connectionResult);
     }
 
     private String printLocation(Location location){
@@ -262,29 +259,40 @@ public class WearableMainActivity extends Activity implements
         mGoogleApiClient.disconnect();
     }
 
+    //Geo Tagging code, potentially move to new class
+
     private final int SAMPLES_REQUIRED = 10;
     private int samples = 0;
+    private boolean tag_location = false;
 
     private KalmanFilter tagLocationKalman = new KalmanFilter(ACCURACY_DECAYS_TIME);
 
-    private void resetTagLocation(){
-        samples = 0;
-        tagLocationKalman = new KalmanFilter(ACCURACY_DECAYS_TIME);
-        init_location = null;
+    private void tagLocation(){
+        tag_location = true;
+        display("Tagging Location, please do not move");
     }
 
-    private Location setTagLocation(Location location){
-        if(init_location != null)
+    private void resetTagLocation(){
+        samples = 1;
+        tagLocationKalman = new KalmanFilter(ACCURACY_DECAYS_TIME);
+        tagged_location = null;
+    }
+
+    private Boolean setTagLocation(Location location){
+        if(tagged_location != null)
             resetTagLocation();
+
+        tagLocationKalman.process(location);
 
         if(samples++ >= SAMPLES_REQUIRED) {
             location.setLatitude(tagLocationKalman.get_lat());
             location.setLongitude(tagLocationKalman.get_lng());
             location.setAccuracy(tagLocationKalman.get_accuracy());
             location.setTime(tagLocationKalman.get_TimeStamp());
-            return location;
+            tagged_location = new Location(location);
+            tag_location = false;
+            return true;
         }
-        tagLocationKalman.process(location.getLatitude(), location.getLongitude(), location.getAccuracy(), location.getTime());
-        return null;
+        return false;
     }
 }
