@@ -6,12 +6,13 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.app.Activity;
-import android.os.CountDownTimer;
-import android.os.PowerManager;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -37,29 +38,33 @@ import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 
-import java.util.List;
-
 public class WearableMainActivity extends Activity implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
-        LocationListener {
+        LocationListener,
+        SensorEventListener {
 
+    //Android device control variables
+    protected static final int REQUEST_CHECK_SETTINGS = 0x1;
     private GoogleApiClient mGoogleApiClient;
     private Vibrator vibrator;
 //    private PowerManager powerManager;
     //To be used later for "wrist" control, proof of concept
-//    private SensorManager mSensorManager;
+    private SensorManager mSensorManager;
 
+    //GUI variables
     private EditText text;
     private Button tag_button;
 
-    private Location tagged_location;
-
+    //Program variables
     public static final int ACCURACY_DECAYS_TIME = 1; // Metres per second
-
     private KalmanFilter kalmanFilter = new KalmanFilter(ACCURACY_DECAYS_TIME);
 
-    protected static final int REQUEST_CHECK_SETTINGS = 0x1;
+    private Location tagged_location;
+
+    //Volatile data variables
+    private volatile Location current_location;
+    private volatile AccelerometerData current_acceleration = new AccelerometerData(0, 0, 0);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,26 +97,31 @@ public class WearableMainActivity extends Activity implements
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
         //Proof of concept PWM vibrator control
-        new CountDownTimer(600000, 60000) {
+//        new CountDownTimer(600000, 60000) {
+//
+//            public void onTick(long millisUntilFinished) {
+//                double minToFinish = Math.floor(millisUntilFinished/60000);
+//                double secToFinish = Math.floor((millisUntilFinished - minToFinish * 60000)/1000);
+//                double milToFinish = millisUntilFinished - secToFinish * 1000;
+//                text.setText("seconds remaining: " + minToFinish+"\n"+secToFinish+"\n"+milToFinish+"\n"+millisUntilFinished);
+//                setVibrationPattern(minToFinish * 10);
+//            }
+//
+//            public void onFinish() {
+//                display("done!");
+//            }
+//        }.start();
 
-            public void onTick(long millisUntilFinished) {
-                double minToFinish = Math.floor(millisUntilFinished/60000);
-                double secToFinish = Math.floor((millisUntilFinished - minToFinish * 60000)/1000);
-                double milToFinish = millisUntilFinished - secToFinish * 1000;
-                text.setText("seconds remaining: " + minToFinish+"\n"+secToFinish+"\n"+milToFinish+"\n"+millisUntilFinished);
-                setVibrationPattern(minToFinish * 10);
-            }
-
-            public void onFinish() {
-                display("done!");
-            }
-        }.start();
-
+        //start sensor manager and set accelerometer listener
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
         //determine what sensors are on testing device, aka my cheap phone, for proof of concept
-//        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 //        List<Sensor> deviceSensors = mSensorManager.getSensorList(Sensor.TYPE_ALL);
 //        for(Sensor sensor : deviceSensors)
 //            display(sensor.toString());
+
+        updateTextHandler(10);
+
     }
 
     public void settingsRequest() {
@@ -229,7 +239,7 @@ public class WearableMainActivity extends Activity implements
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         settingsRequest();
-//        printLocation(mLastLocation);
+//        locationToString(mLastLocation);
     }
 
     //Outdated mode of GPS, best practise is to use GPSFused via Google
@@ -253,39 +263,23 @@ public class WearableMainActivity extends Activity implements
         Location raw_location = new Location(location);
 
         kalmanFilter.process(location);
-        location = kalmanFilter.returnLocation();
+        current_location = kalmanFilter.returnLocation();
 
         //Print data to screen for debugging
-        String value = "Data:\n";
-        if(tagged_location != null) {
-            value += "Tagged:\n" + printLocation(tagged_location) + "\n";
-            float dist = location.distanceTo(tagged_location);
-            value+= "Distance from: "+dist+"\n";
-
-//            if(vibrate_count++ > 10) {
-//                long timing = (long) (10000 / dist);
-//                pwmVibrate(timing);
-//                vibrate_count = 0;
-//            }
-        }
-        value+= "New:\n"+printLocation(location)+"\n";
-        value+= "Raw:\n"+printLocation(raw_location);
-        display(value);
+//        String value = "Data:\n";
+//        if(tagged_location != null) {
+//            value += "Tagged:\n" + locationToString(tagged_location) + "\n";
+//            float dist = location.distanceTo(tagged_location);
+//            value+= "Distance from: "+dist+"\n";
+//        }
+//        value+= "New:\n"+ locationToString(location)+"\n";
+//        value+= "Raw:\n"+ locationToString(raw_location);
+//        display(value);
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         display("Failed: "+connectionResult);
-    }
-
-    private String printLocation(Location location){
-        String values = location.getLatitude()+"\n"+location.getLongitude()+"\n"+location.getAccuracy();
-//        vibrator.vibrate(500);
-        return values;
-    }
-
-    private void display(String value){
-        text.setText(value);
     }
 
     @Override
@@ -299,8 +293,25 @@ public class WearableMainActivity extends Activity implements
         super.onStop();
         stopVibrate();
         mGoogleApiClient.disconnect();
+        mSensorManager.unregisterListener(this);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor arg0, int arg1) {
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType()==Sensor.TYPE_ACCELEROMETER){
+            double ax=event.values[0];
+            double ay=event.values[1];
+            double az=event.values[2];
+            current_acceleration.update(ax, ay, az);
+            String value = ax+" "+ay+" "+az;
+//            display(current_acceleration.toString());
+        }
     }
 
     private void setVibrationPattern(double distance){
@@ -330,6 +341,39 @@ public class WearableMainActivity extends Activity implements
         vibrator.cancel();
     }
 
+    /**Regular method for updating information to screen from multiple async data updates
+     *
+     */
+    private void updateTextHandler(final int time_ms){
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run()
+            {
+                displayToScreen();
+                updateTextHandler(time_ms);
+            }
+        }, time_ms);
+    }
+
+    private void displayToScreen(){
+        String text = locationToString(current_location)+"\n";
+        if(tagged_location != null) {
+            text += locationToString(tagged_location) + "\n";
+            text += "Distance: "+current_location.distanceTo(tagged_location)+"\n";
+        }
+        text += current_acceleration.toString();
+        display(text);
+    }
+
+    private String locationToString(Location location){
+        if(location == null)
+            return "No location set yet";
+        return "Lng: "+location.getLatitude()+"\nLat: "+location.getLongitude()+"\nAcc: "+location.getAccuracy();
+    }
+
+    private void display(String value){
+        text.setText(value);
+    }
     //Geo Tagging code, potentially move to new class
 
     private final int SAMPLES_REQUIRED = 10;
