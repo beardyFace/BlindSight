@@ -5,13 +5,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.app.Activity;
+import android.os.CountDownTimer;
+import android.os.PowerManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.EditText;
 
 import android.os.Vibrator;
@@ -32,6 +37,8 @@ import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 
+import java.util.List;
+
 public class WearableMainActivity extends Activity implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
@@ -39,9 +46,12 @@ public class WearableMainActivity extends Activity implements
 
     private GoogleApiClient mGoogleApiClient;
     private Vibrator vibrator;
+//    private PowerManager powerManager;
+    //To be used later for "wrist" control, proof of concept
+//    private SensorManager mSensorManager;
 
     private EditText text;
-    private Button tag_loc;
+    private Button tag_button;
 
     private Location tagged_location;
 
@@ -55,12 +65,14 @@ public class WearableMainActivity extends Activity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wearable_main);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
 
         //TODO:
         // As the client is blind a GUI interface is not useful.
         // To be replaced by "accelerometer command" readings based on user testing with client
-        tag_loc = (Button) findViewById(R.id.geoButton);
-        tag_loc.setOnClickListener(new View.OnClickListener() {
+        tag_button = (Button) findViewById(R.id.geoButton);
+        tag_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 tagLocation();
@@ -78,6 +90,28 @@ public class WearableMainActivity extends Activity implements
                 .addApi(AppIndex.API).build();
 
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+
+        //Proof of concept PWM vibrator control
+        new CountDownTimer(600000, 60000) {
+
+            public void onTick(long millisUntilFinished) {
+                double minToFinish = Math.floor(millisUntilFinished/60000);
+                double secToFinish = Math.floor((millisUntilFinished - minToFinish * 60000)/1000);
+                double milToFinish = millisUntilFinished - secToFinish * 1000;
+                text.setText("seconds remaining: " + minToFinish+"\n"+secToFinish+"\n"+milToFinish+"\n"+millisUntilFinished);
+                setVibrationPattern(minToFinish * 10);
+            }
+
+            public void onFinish() {
+                display("done!");
+            }
+        }.start();
+
+        //determine what sensors are on testing device, aka my cheap phone, for proof of concept
+//        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+//        List<Sensor> deviceSensors = mSensorManager.getSensorList(Sensor.TYPE_ALL);
+//        for(Sensor sensor : deviceSensors)
+//            display(sensor.toString());
     }
 
     public void settingsRequest() {
@@ -183,6 +217,7 @@ public class WearableMainActivity extends Activity implements
     protected void onResume() {
         super.onResume();
         mGoogleApiClient.connect();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     @Override
@@ -226,6 +261,12 @@ public class WearableMainActivity extends Activity implements
             value += "Tagged:\n" + printLocation(tagged_location) + "\n";
             float dist = location.distanceTo(tagged_location);
             value+= "Distance from: "+dist+"\n";
+
+//            if(vibrate_count++ > 10) {
+//                long timing = (long) (10000 / dist);
+//                pwmVibrate(timing);
+//                vibrate_count = 0;
+//            }
         }
         value+= "New:\n"+printLocation(location)+"\n";
         value+= "Raw:\n"+printLocation(raw_location);
@@ -239,7 +280,7 @@ public class WearableMainActivity extends Activity implements
 
     private String printLocation(Location location){
         String values = location.getLatitude()+"\n"+location.getLongitude()+"\n"+location.getAccuracy();
-        vibrator.vibrate(500);
+//        vibrator.vibrate(500);
         return values;
     }
 
@@ -256,7 +297,37 @@ public class WearableMainActivity extends Activity implements
     @Override
     public void onStop() {
         super.onStop();
+        stopVibrate();
         mGoogleApiClient.disconnect();
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+    }
+
+    private void setVibrationPattern(double distance){
+        //TODO
+        //Tweak this equation to allow for communicating distance from location.
+        //Needs to be noticeably different at a range of ~200m? maybe
+        //To add: Compass/Bluetooth to calculate distance better
+        //Compass will help get bearing at least. current problem.
+        long timing = (long)(distance * 1000)/2;
+        pwmVibrate(timing);
+    }
+
+    private void pwmVibrate(long timing){
+        long[] pattern = new long[2];
+        for(int i = 0; i < pattern.length; i++) {
+            if (i % 2 == 0)
+                pattern[i] = timing;
+            else
+                pattern[i] = 500;
+        }
+        //vibrate at pattern forever, until stopped
+        vibrator.vibrate(pattern, 0);
+//        vibrator.vibrate(timing);
+    }
+
+    private void stopVibrate(){
+        vibrator.cancel();
     }
 
     //Geo Tagging code, potentially move to new class
