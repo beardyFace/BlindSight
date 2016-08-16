@@ -24,7 +24,6 @@ import android.os.Vibrator;
 
 import android.widget.Button;
 
-import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -37,6 +36,12 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.wearable.Wearable;
+
+import org.altbeacon.beacon.BeaconManager;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class WearableMainActivity extends Activity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -47,24 +52,131 @@ public class WearableMainActivity extends Activity implements
     //Android device control variables
     protected static final int REQUEST_CHECK_SETTINGS = 0x1;
     private GoogleApiClient mGoogleApiClient;
+    private BeaconManager beaconManager;
     private Vibrator vibrator;
 //    private PowerManager powerManager;
-    //To be used later for "wrist" control, proof of concept
     private SensorManager mSensorManager;
-
-    //GUI variables
-    private EditText text;
-    private Button tag_button;
+    //////////////////////
 
     //Program variables
-    public static final int ACCURACY_DECAYS_TIME = 1; // Metres per second
+    public static final int ACCURACY_DECAYS_TIME = 5; // Metres per second
     private KalmanFilter kalmanFilter = new KalmanFilter(ACCURACY_DECAYS_TIME);
 
-    private Location tagged_location;
+    private Command current_command = Command.EMPTY;
 
     //Volatile data variables
     private volatile Location current_location;
-    private volatile AccelerometerData current_acceleration = new AccelerometerData(0, 0, 0);
+    private volatile Location tagged_location;
+
+//    private volatile SensorData current_acceleration = new SensorData(0, 0, 0);
+//    private volatile SensorData current_compass = new SensorData(0, 0, 0);
+    private volatile SensorData orientation = new SensorData(0, 0, 0);
+    //////////////////////
+
+    //UI display
+    private EditText text;
+    private Button tag_button;
+
+    private final Handler handler = new Handler();
+    private final Runnable runner = new TimerTask() {
+        @Override
+        public void run() {
+            runMain();
+        }
+    };
+
+    private final Timer timer = new Timer();
+    private final TimerTask task = new TimerTask() {
+        @Override
+        public void run() {
+            handler.post(runner);
+        }
+    };
+
+    private final long delay = 0;//no delay
+    private final long period = 100;//every period ms
+    //////////////////////
+
+    //hold watch facing up to check angle towards goal
+    //vibrate pulse number for each 10 m one pulse per 10m
+    // < 10m vibrate "harder" as get closer
+
+    private void runMain(){
+        updateFeedback();
+    }
+
+    private void updateFeedback(){
+        current_command = Command.getCommand(orientation);
+        double value = 0;
+        switch(current_command){
+            case DISTANCE:
+                value = indicateDistance();
+                break;
+            case ANGLE:
+                value = indicateAngle();
+                break;
+            default:
+                break;
+        }
+        displayToScreen(current_command, value);
+    }
+
+    private double indicateAngle(){
+//        orientation;
+        if(tagged_location != null && current_location != null && orientation != null){
+            double azimuth = orientation.getAx();
+            double bearingTo = current_location.bearingTo(tagged_location);
+            double difference = Math.abs(azimuth - bearingTo);
+            display("Difference: "+difference);//debug
+
+            if(difference < 10)
+                vibrator.vibrate(100);
+            else
+                stopVibrate();
+            return difference;
+        }
+        return 0;
+    }
+
+    private double indicateDistance(){
+        double distance = 0;
+//        current_location;
+//        if(tagged_location != null && current_location != null) {
+//            double distance = current_location.distanceTo(tagged_location);
+//            if(current_distance < 0) {
+//                current_distance = distance;
+//                setVibrationPattern(current_distance);
+//                return;
+//            }
+//            double diff = Math.abs(round(distance) - round(current_distance));
+//            if(diff > 0) {
+//                setVibrationPattern(current_distance);
+//            }
+//            current_distance = distance;
+//        }
+        return distance;
+    }
+
+    private void displayToScreen(Command command, double value){
+        String text = "Command: "+command+" "+value+"\n";
+               text +=orientation.toString()+"\n";
+//        String text = "GPS: "+hasGps()+"\n";
+//               text += "API: "+hasConnectedWearableAPI()+"\n";
+               text += locationToString(current_location)+"\n";
+//        if(tagged_location != null) {
+//            text += locationToString(tagged_location) + "\n";
+//            text += "Distance: "+current_location.distanceTo(tagged_location)+"\n"+current_distance+"\n";
+//        }
+//        text += current_acceleration.toString();
+//        text += current_compass.toString();
+        display(text);
+    }
+
+    private String locationToString(Location location){
+        if(location == null)
+            return "No location set yet";
+        return "Lng: "+location.getLatitude()+"\nLat: "+location.getLongitude()+"\nAcc: "+location.getAccuracy();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,10 +184,6 @@ public class WearableMainActivity extends Activity implements
         setContentView(R.layout.activity_wearable_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-
-        //TODO:
-        // As the client is blind a GUI interface is not useful.
-        // To be replaced by "accelerometer command" readings based on user testing with client
         tag_button = (Button) findViewById(R.id.geoButton);
         tag_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -89,40 +197,32 @@ public class WearableMainActivity extends Activity implements
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
-//                .addApi(Wearable.API)  // used for data layer API
+//                .addApi(AppIndex.API)
+                .addApi(Wearable.API)  // used for data layer API
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
-                .addApi(AppIndex.API).build();
+                .build();
+//                .addApi(AppIndex.API).build();
 
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-
-        //Proof of concept PWM vibrator control
-//        new CountDownTimer(600000, 60000) {
-//
-//            public void onTick(long millisUntilFinished) {
-//                double minToFinish = Math.floor(millisUntilFinished/60000);
-//                double secToFinish = Math.floor((millisUntilFinished - minToFinish * 60000)/1000);
-//                double milToFinish = millisUntilFinished - secToFinish * 1000;
-//                text.setText("seconds remaining: " + minToFinish+"\n"+secToFinish+"\n"+milToFinish+"\n"+millisUntilFinished);
-//                setVibrationPattern(minToFinish * 10);
-//            }
-//
-//            public void onFinish() {
-//                display("done!");
-//            }
-//        }.start();
 
         //start sensor manager and set accelerometer listener
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
         //determine what sensors are on testing device, aka my cheap phone, for proof of concept
 //        List<Sensor> deviceSensors = mSensorManager.getSensorList(Sensor.TYPE_ALL);
 //        for(Sensor sensor : deviceSensors)
 //            display(sensor.toString());
 
-        updateTextHandler(10);
+        tagged_location = new Location("");
+        tagged_location.setLatitude(-41.289011d);
+        tagged_location.setLongitude(174.761843d);
 
+        timer.scheduleAtFixedRate(task, delay, period);
     }
+
 
     public void settingsRequest() {
         LocationRequest locationRequest = LocationRequest.create();
@@ -186,39 +286,14 @@ public class WearableMainActivity extends Activity implements
 
     public void startLocationUpdates(){
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            String values = "";
-            values += ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
-            values += " "+PackageManager.PERMISSION_GRANTED;
-            values += " "+ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
-            values += " "+PackageManager.PERMISSION_GRANTED;
-            values += " "+(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED);
-
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            display("Failed to connect\n"+values);
+            display("Permissions not set, Failed to connect\n");
             return;
         }
 
-//        LocationManager locationManager = (LocationManager) getSystemService(Activity.LOCATION_SERVICE);
-//        boolean isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-//        boolean isNetworkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-
-//        if (!hasGps()) {
-////            text.setText("No GPS: "+isGPSEnabled+" "+isNetworkEnabled);
-//            text.setText("No GPS");
-//            return;
-//        }
-
         LocationRequest locationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(1000)        // 1 seconds, in milliseconds
-                .setFastestInterval(1000); // 1 second, in milliseconds
+                .setInterval(100)
+                .setFastestInterval(10);
 
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, locationRequest, this);
     }
@@ -238,19 +313,18 @@ public class WearableMainActivity extends Activity implements
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        settingsRequest();
-//        locationToString(mLastLocation);
-    }
+//        settingsRequest();
+        mGoogleApiClient.connect();
+        startLocationUpdates();
 
-    //Outdated mode of GPS, best practise is to use GPSFused via Google
-//    private boolean hasGps() {
-//        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS);
-//    }
+//        settingsRequest();
+    }
 
     @Override
     public void onConnectionSuspended(int i) {
         display("Suspended: "+i);
     }
+
 
     @Override
     public void onLocationChanged(Location location) {
@@ -259,11 +333,25 @@ public class WearableMainActivity extends Activity implements
             if(!setTagLocation(location))
                 return;
         }
-
-        Location raw_location = new Location(location);
-
+//        Location raw_location = new Location(location);
         kalmanFilter.process(location);
         current_location = kalmanFilter.returnLocation();
+
+//        location.bearingTo()
+
+//        if(tagged_location != null) {
+//            double distance = current_location.distanceTo(tagged_location);
+//            if(current_distance < 0) {
+//                current_distance = distance;
+//                setVibrationPattern(current_distance);
+//                return;
+//            }
+//            double diff = Math.abs(round(distance) - round(current_distance));
+//            if(diff > 0) {
+//                setVibrationPattern(current_distance);
+//            }
+//            current_distance = distance;
+//        }
 
         //Print data to screen for debugging
 //        String value = "Data:\n";
@@ -280,6 +368,9 @@ public class WearableMainActivity extends Activity implements
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         display("Failed: "+connectionResult);
+        if (connectionResult.getErrorCode() == ConnectionResult.API_UNAVAILABLE) {
+            display("API not there");
+        }
     }
 
     @Override
@@ -302,16 +393,43 @@ public class WearableMainActivity extends Activity implements
     public void onAccuracyChanged(Sensor arg0, int arg1) {
     }
 
+    float[] gravity = new float[3];
+    float[] geomag = new float[3];
+
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType()==Sensor.TYPE_ACCELEROMETER){
-            double ax=event.values[0];
-            double ay=event.values[1];
-            double az=event.values[2];
-            current_acceleration.update(ax, ay, az);
-            String value = ax+" "+ay+" "+az;
-//            display(current_acceleration.toString());
+            for(int i = 0; i < 3; i++)
+                gravity[i] = event.values[i];
         }
+        else if(event.sensor.getType()==Sensor.TYPE_MAGNETIC_FIELD){
+            for(int i = 0; i < 3; i++)
+                geomag[i] = event.values[i];
+        }
+
+        float[] inR = new float[9];
+        float[] I = new float[9];
+        float[] orientVals = new float[3];
+
+        double azimuth = 0;
+        double pitch = 0;
+        double roll = 0;
+
+        if (gravity != null && geomag != null) {
+            // checks that the rotation matrix is found
+            boolean success = SensorManager.getRotationMatrix(inR, I, gravity, geomag);
+            if (success) {
+                SensorManager.getOrientation(inR, orientVals);
+                azimuth = Math.toDegrees(orientVals[0]);
+                pitch = Math.toDegrees(orientVals[1]);
+                roll = Math.toDegrees(orientVals[2]);
+                orientation.update(azimuth, pitch, roll);
+            }
+        }
+    }
+
+    private void stopVibrate(){
+        vibrator.cancel();
     }
 
     private void setVibrationPattern(double distance){
@@ -320,55 +438,36 @@ public class WearableMainActivity extends Activity implements
         //Needs to be noticeably different at a range of ~200m? maybe
         //To add: Compass/Bluetooth to calculate distance better
         //Compass will help get bearing at least. current problem.
-        long timing = (long)(distance * 1000)/2;
-        pwmVibrate(timing);
-    }
+        distance = round(distance);
+        if(distance == 0)
+            distance = 1;//min of 1m error
 
-    private void pwmVibrate(long timing){
+        long timing = (long)(100*distance);
+
         long[] pattern = new long[2];
         for(int i = 0; i < pattern.length; i++) {
             if (i % 2 == 0)
                 pattern[i] = timing;
             else
-                pattern[i] = 500;
+                pattern[i] = 100;
         }
-        //vibrate at pattern forever, until stopped
         vibrator.vibrate(pattern, 0);
-//        vibrator.vibrate(timing);
     }
 
-    private void stopVibrate(){
-        vibrator.cancel();
+    private double round(double i){
+        return round(i, 10);
     }
 
-    /**Regular method for updating information to screen from multiple async data updates
-     *
-     */
-    private void updateTextHandler(final int time_ms){
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            public void run()
-            {
-                displayToScreen();
-                updateTextHandler(time_ms);
-            }
-        }, time_ms);
+    private double round(double i, int v){
+        return (Math.round(i/v) * v);
     }
 
-    private void displayToScreen(){
-        String text = locationToString(current_location)+"\n";
-        if(tagged_location != null) {
-            text += locationToString(tagged_location) + "\n";
-            text += "Distance: "+current_location.distanceTo(tagged_location)+"\n";
-        }
-        text += current_acceleration.toString();
-        display(text);
+    private boolean hasGps() {
+        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS);
     }
 
-    private String locationToString(Location location){
-        if(location == null)
-            return "No location set yet";
-        return "Lng: "+location.getLatitude()+"\nLat: "+location.getLongitude()+"\nAcc: "+location.getAccuracy();
+    private boolean hasConnectedWearableAPI(){
+        return mGoogleApiClient.hasConnectedApi(Wearable.API);
     }
 
     private void display(String value){

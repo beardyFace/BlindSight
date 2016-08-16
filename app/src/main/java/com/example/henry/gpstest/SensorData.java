@@ -3,13 +3,13 @@ package com.example.henry.gpstest;
 /**
  * Created by Henry on 14-Jul-16.
  */
-public class AccelerometerData {
+public class SensorData {
 
     private double ax;
     private double ay;
     private double az;
 
-    public AccelerometerData(double ax, double ay, double az){
+    public SensorData(double ax, double ay, double az){
         this.ax = ax;
         this.ay = ay;
         this.az = az;
@@ -20,9 +20,20 @@ public class AccelerometerData {
         this.ay = ay;
         this.az = az;
     }
-    //TODO
-    //Add methods to judge wrist command states
+
+    public double getAx(){
+        return ax;
+    }
+
+    public double getAy(){
+        return ay;
+    }
+
+    public double getAz(){
+        return az;
+    }
+
     public String toString(){
-        return "X: "+ ax +"\nY: "+ ay +"\nZ: "+ az;
+        return "X: "+ Helper.round(ax, 2) +"\nY: "+ Helper.round(ay, 2) +"\nZ: "+ Helper.round(az, 2);
     }
 }

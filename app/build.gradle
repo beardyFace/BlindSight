@@ -1,6 +1,5 @@
 apply plugin: 'com.android.application'
 
-
 android {
     compileSdkVersion 24
     buildToolsVersion "24.0.0"
@@ -26,4 +25,5 @@ dependencies {
     compile 'com.google.android.gms:play-services-wearable:9.0.0'
     compile 'com.google.android.gms:play-services-location:9.0.0'
     compile 'com.google.android.gms:play-services-appindexing:9.0.0'
+    compile 'org.altbeacon:android-beacon-library:2+'
 }
