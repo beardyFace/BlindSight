@@ -6,7 +6,8 @@ package com.example.henry.gpstest;
 public enum Command {
     EMPTY,
     DISTANCE,
-    ANGLE;
+    ANGLE,
+    TAG;
 
     public static Command getCommand(SensorData orientation){
         double pitch = orientation.getAy();
@@ -14,6 +15,10 @@ public enum Command {
 
         if(Math.abs(pitch) < 10 && Math.abs(roll) < 5)
             return ANGLE;
+        else if(pitch > 70 && pitch < 90)
+            return DISTANCE;
+        else if(pitch < -70 && pitch > -90)
+            return TAG;
 
         return EMPTY;
     }

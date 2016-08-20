@@ -1,21 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.henry.gpstest">
+    <!--xmlns:tools="http://schemas.android.com/tools">-->
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!--<uses-feature android:name="android.hardware.type.watch" />-->
     <uses-feature android:name="android.hardware.type.watch" />
 
-    <application
+    <application>
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault">
+
         <activity
             android:name=".WearableMainActivity"
             android:label="@string/title_activity_wearable_main">
@@ -24,11 +29,35 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
+        </activity>
+
+        <!-- ATTENTION: This was auto-generated to add Google Play services to your project for
      App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
+        <!--<service-->
+            <!--android:name="org.altbeacon.beacon.service.BeaconService"-->
+            <!--android:enabled="true"-->
+            <!--android:exported="true"-->
+            <!--tools:replace="android:exported"-->
+            <!--android:isolatedProcess="false"-->
+            <!--android:label="beacon" >-->
+        <!--</service>-->
+        <!--<service-->
+            <!--android:name="org.altbeacon.beacon.BeaconIntentProcessor"-->
+            <!--android:enabled="true" >-->
+        <!--</service>-->
+
+        <!--<receiver android:name="org.altbeacon.beacon.startup.StartupBroadcastReceiver">-->
+            <!--<intent-filter>-->
+                <!--<action android:name="android.intent.action.BOOT_COMPLETED"/>-->
+                <!--<action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>-->
+                <!--<action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/>-->
+            <!--</intent-filter>-->
+        <!--</receiver>-->
+
     </application>
 
 </manifest>

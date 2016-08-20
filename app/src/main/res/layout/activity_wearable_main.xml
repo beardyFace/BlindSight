@@ -20,8 +20,8 @@
         android:layout_alignParentEnd="true" />
 
     <Button
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
         android:layout_alignParentBottom="true"
         android:id="@+id/geoButton"
         android:textSize="10dp"

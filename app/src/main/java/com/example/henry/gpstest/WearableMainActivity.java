@@ -1,6 +1,7 @@
 package com.example.henry.gpstest;
 
 import android.Manifest;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -12,7 +13,7 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.app.Activity;
-import android.os.Handler;
+import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -38,16 +39,35 @@ import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.wearable.Wearable;
 
+import org.altbeacon.beacon.Beacon;
+import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.BeaconParser;
+import org.altbeacon.beacon.Identifier;
+import org.altbeacon.beacon.RangeNotifier;
+import org.altbeacon.beacon.Region;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.Collection;
 
 public class WearableMainActivity extends Activity implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener,
-        SensorEventListener {
+        SensorEventListener,
+        BeaconConsumer {
+
+    //App operation
+
+    //hold watch facing up and flat to check angle towards goal
+        //will vibrate when facing less than 10 degrees from goal
+
+    //rotate wrist forwards to get distance
+        //if > 10m away
+            //vibrate once per 10m away
+        //else if < 10m vibrate "harder" as get closer
+            //pulse three times in quick succession to indicate close
+            //vibrate once per 1m away
+
 
     //Android device control variables
     protected static final int REQUEST_CHECK_SETTINGS = 0x1;
@@ -71,43 +91,51 @@ public class WearableMainActivity extends Activity implements
 //    private volatile SensorData current_acceleration = new SensorData(0, 0, 0);
 //    private volatile SensorData current_compass = new SensorData(0, 0, 0);
     private volatile SensorData orientation = new SensorData(0, 0, 0);
+    private volatile Beacon distance_beacon;
     //////////////////////
 
     //UI display
     private EditText text;
     private Button tag_button;
 
-    private final Handler handler = new Handler();
-    private final Runnable runner = new TimerTask() {
+//    private final Handler handler = new Handler();
+
+    private final Runnable command_runner = new Runnable() {
         @Override
         public void run() {
-            runMain();
+            while(true) {
+                updateFeedback();
+                waitMS(100);
+            }
         }
     };
 
-    private final Timer timer = new Timer();
-    private final TimerTask task = new TimerTask() {
-        @Override
-        public void run() {
-            handler.post(runner);
-        }
-    };
+    private Thread command_thread = new Thread(command_runner);
+    private void scheduleMain(){
+//        AsyncTask.execute(command_runner);
+        command_thread.start();
+//        handler.postDelayed(command_runner, 10);
+    }
+//    private volatile boolean isRunning = false;
+//    private final Timer timer = new Timer();
+//    private final TimerTask task = new TimerTask() {
+//        @Override
+//        public void run() {
+//            if(!isRunning) {
+//                isRunning = true;
+//                handler.post(command_runner);
+//                isRunning = false;
+//            }
+//        }
+//    };
 
     private final long delay = 0;//no delay
-    private final long period = 100;//every period ms
+    private final long period = 10;//every period ms
     //////////////////////
 
-    //hold watch facing up to check angle towards goal
-    //vibrate pulse number for each 10 m one pulse per 10m
-    // < 10m vibrate "harder" as get closer
-
-    private void runMain(){
-        updateFeedback();
-    }
-
+    private double value = 0;
     private void updateFeedback(){
         current_command = Command.getCommand(orientation);
-        double value = 0;
         switch(current_command){
             case DISTANCE:
                 value = indicateDistance();
@@ -115,6 +143,8 @@ public class WearableMainActivity extends Activity implements
             case ANGLE:
                 value = indicateAngle();
                 break;
+            case TAG:
+                current_command = setTagLocation();
             default:
                 break;
         }
@@ -126,11 +156,14 @@ public class WearableMainActivity extends Activity implements
         if(tagged_location != null && current_location != null && orientation != null){
             double azimuth = orientation.getAx();
             double bearingTo = current_location.bearingTo(tagged_location);
-            double difference = Math.abs(azimuth - bearingTo);
-            display("Difference: "+difference);//debug
 
-            if(difference < 10)
-                vibrator.vibrate(100);
+            double direction = azimuth - bearingTo;
+
+            double difference = Math.abs(azimuth - bearingTo);
+//            display("Difference: "+difference);//debug
+
+            if(difference < 5)
+                vibrator.vibrate(1000);
             else
                 stopVibrate();
             return difference;
@@ -138,23 +171,65 @@ public class WearableMainActivity extends Activity implements
         return 0;
     }
 
+    private volatile boolean updateOrientation = false;
+    private Command setTagLocation(){
+        vibrator.vibrate(1000);
+        waitMS(5000);
+        updateOrientation = false;
+        Command command = Command.EMPTY;
+        while(!updateOrientation){
+            command = Command.getCommand(orientation);
+        }
+        int pulses = 1;
+        int time = 500;
+        if(command == Command.TAG) {
+            tagLocation();
+            pulses = 3;
+        }
+        long[] pattern = getPattern(pulses, time);
+        vibrator.vibrate(pattern, -1);
+        waitMS(pulses * 2 * time + 2000);
+        return command;
+    }
+
     private double indicateDistance(){
-        double distance = 0;
+        double distanceTo = 0;
 //        current_location;
-//        if(tagged_location != null && current_location != null) {
-//            double distance = current_location.distanceTo(tagged_location);
-//            if(current_distance < 0) {
-//                current_distance = distance;
-//                setVibrationPattern(current_distance);
-//                return;
+        if(tagged_location != null && current_location != null) {
+            distanceTo = current_location.distanceTo(tagged_location);
+            double nearestTen = round(distanceTo, 10);
+            int pulses = (int)(nearestTen/10);
+
+            int time = 500;
+            long[] pattern = getPattern(pulses, time);
+            vibrator.vibrate(pattern, -1);
+//            try {
+//                Thread.sleep(pulses * 2 * length + 2000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
 //            }
-//            double diff = Math.abs(round(distance) - round(current_distance));
-//            if(diff > 0) {
-//                setVibrationPattern(current_distance);
-//            }
-//            current_distance = distance;
-//        }
-        return distance;
+
+            long expectedElapsedTime = pulses * 2 * time + 2000;
+            waitMS(expectedElapsedTime);
+
+            stopVibrate();
+        }
+        return distanceTo;
+    }
+
+    private long[] getPattern(int pulses, int length){
+        long[] pattern = new long[pulses * 2];
+        for(int i = 0; i < pulses * 2; i++)
+            pattern[i] = length;
+        return pattern;
+    }
+
+    private void waitMS(long time){
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private void displayToScreen(Command command, double value){
@@ -163,6 +238,9 @@ public class WearableMainActivity extends Activity implements
 //        String text = "GPS: "+hasGps()+"\n";
 //               text += "API: "+hasConnectedWearableAPI()+"\n";
                text += locationToString(current_location)+"\n";
+
+            if(distance_beacon != null)
+                text += distance_beacon.getDistance();
 //        if(tagged_location != null) {
 //            text += locationToString(tagged_location) + "\n";
 //            text += "Distance: "+current_location.distanceTo(tagged_location)+"\n"+current_distance+"\n";
@@ -175,7 +253,7 @@ public class WearableMainActivity extends Activity implements
     private String locationToString(Location location){
         if(location == null)
             return "No location set yet";
-        return "Lng: "+location.getLatitude()+"\nLat: "+location.getLongitude()+"\nAcc: "+location.getAccuracy();
+        return "Lat: "+location.getLatitude()+"\nLng: "+location.getLongitude()+"\nAcc: "+location.getAccuracy();
     }
 
     @Override
@@ -202,7 +280,20 @@ public class WearableMainActivity extends Activity implements
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
-//                .addApi(AppIndex.API).build();
+
+        beaconManager = BeaconManager.getInstanceForApplication(this);
+
+        beaconManager.getBeaconParsers()
+                .add(new BeaconParser().setBeaconLayout("m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25"));
+                                                      //"m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25"
+
+        beaconManager.setForegroundScanPeriod(1000);
+        beaconManager.setBackgroundScanPeriod(1000);
+
+//        ComponentName myService = startService(new Intent(this, WearableMainActivity.class));
+//        bindService(new Intent(this, WearableMainActivity.class), myServiceConn, BIND_AUTO_CREATE);
+
+        beaconManager.bind(this);
 
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -216,13 +307,24 @@ public class WearableMainActivity extends Activity implements
 //        for(Sensor sensor : deviceSensors)
 //            display(sensor.toString());
 
+        current_location = new Location("");
+        current_location.setLatitude(-41.287502);
+        current_location.setLongitude(174.760777);
+
         tagged_location = new Location("");
-        tagged_location.setLatitude(-41.289011d);
-        tagged_location.setLongitude(174.761843d);
+        //122
+        tagged_location.setLatitude(-41.287312);
+        tagged_location.setLongitude(174.760955);
+        //121 Upland Road
+//        tagged_location.setLatitude(-41.287644);
+//        tagged_location.setLongitude(174.760831);
+        //four square
+//        tagged_location.setLatitude(-41.289011);
+//        tagged_location.setLongitude(174.761843);
 
-        timer.scheduleAtFixedRate(task, delay, period);
+//        timer.scheduleAtFixedRate(task, delay, period);
+        scheduleMain();
     }
-
 
     public void settingsRequest() {
         LocationRequest locationRequest = LocationRequest.create();
@@ -336,33 +438,6 @@ public class WearableMainActivity extends Activity implements
 //        Location raw_location = new Location(location);
         kalmanFilter.process(location);
         current_location = kalmanFilter.returnLocation();
-
-//        location.bearingTo()
-
-//        if(tagged_location != null) {
-//            double distance = current_location.distanceTo(tagged_location);
-//            if(current_distance < 0) {
-//                current_distance = distance;
-//                setVibrationPattern(current_distance);
-//                return;
-//            }
-//            double diff = Math.abs(round(distance) - round(current_distance));
-//            if(diff > 0) {
-//                setVibrationPattern(current_distance);
-//            }
-//            current_distance = distance;
-//        }
-
-        //Print data to screen for debugging
-//        String value = "Data:\n";
-//        if(tagged_location != null) {
-//            value += "Tagged:\n" + locationToString(tagged_location) + "\n";
-//            float dist = location.distanceTo(tagged_location);
-//            value+= "Distance from: "+dist+"\n";
-//        }
-//        value+= "New:\n"+ locationToString(location)+"\n";
-//        value+= "Raw:\n"+ locationToString(raw_location);
-//        display(value);
     }
 
     @Override
@@ -385,8 +460,10 @@ public class WearableMainActivity extends Activity implements
         stopVibrate();
         mGoogleApiClient.disconnect();
         mSensorManager.unregisterListener(this);
+        beaconManager.unbind(this);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
+        while(!command_thread.isInterrupted())
+            command_thread.interrupt();
     }
 
     @Override
@@ -424,8 +501,65 @@ public class WearableMainActivity extends Activity implements
                 pitch = Math.toDegrees(orientVals[1]);
                 roll = Math.toDegrees(orientVals[2]);
                 orientation.update(azimuth, pitch, roll);
+                updateOrientation = true;
             }
         }
+    }
+
+    @Override
+    public void onBeaconServiceConnect() {
+        final String UUID = "2f234454-cf6d-4a0f-adf2-f4911ba9ffa6";
+        final String ADDRESS = "0C:F3:EE:09:47:10";
+//        final int major = 0;
+//        final int minor = 1;
+        beaconManager.addRangeNotifier(new RangeNotifier() {
+            @Override
+            public void didRangeBeaconsInRegion(final Collection<Beacon> beacons, Region region) {
+                if (beacons.size() > 0) {
+                    for(Beacon beacon : beacons) {
+                        if(beacon.getBluetoothAddress().equals(ADDRESS))
+                            distance_beacon = beacon;
+//                        final String name = beacon.getBluetoothName();
+//                        final double distance = beacon.getDistance();
+//                        final String address = beacon.getBluetoothAddress();
+//                        beacon.getRssi();
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                display("Beacon "+ name +" I see is about " + distance + " meters away. "+address);
+//                            }
+//                        });
+                    }
+                }
+            }
+        });
+
+        try {
+;            beaconManager.startRangingBeaconsInRegion(new Region("myRangingUniqueId", Identifier.parse(UUID), null, null));
+        } catch (RemoteException e) {    }
+//        display("here");
+//        beaconManager.addMonitorNotifier(new MonitorNotifier() {
+//            @Override
+//            public void didEnterRegion(Region region) {
+//                display("I just saw an beacon for the first time!");
+//            }
+//
+//            @Override
+//            public void didExitRegion(Region region) {
+//                display("I no longer see an beacon");
+//            }
+//
+//            @Override
+//            public void didDetermineStateForRegion(int state, Region region) {
+//                display("I have just switched from seeing/not seeing beacons: "+state + " " + region);
+//            }
+//        });
+//
+//        try {
+//            beaconManager.startMonitoringBeaconsInRegion(new Region("myMonitoringUniqueId", Identifier.parse(UUID), null, null));
+//        } catch (RemoteException e) {
+//            display(e.getMessage());
+//        }
     }
 
     private void stopVibrate(){
@@ -471,10 +605,16 @@ public class WearableMainActivity extends Activity implements
     }
 
     private void display(String value){
-        text.setText(value);
+        final String text_display = value;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                text.setText(text_display);
+            }
+        });
     }
-    //Geo Tagging code, potentially move to new class
 
+    //Geo Tagging code, potentially move to new class
     private final int SAMPLES_REQUIRED = 10;
     private int samples = 0;
     private boolean tag_location = false;
@@ -483,7 +623,7 @@ public class WearableMainActivity extends Activity implements
 
     private void tagLocation(){
         tag_location = true;
-        display("Tagging Location, please do not move");
+//        display("Tagging Location, please do not move");
     }
 
     private void resetTagLocation(){
