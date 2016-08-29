@@ -13,7 +13,7 @@ public enum Command {
         double pitch = orientation.getAy();
         double roll = orientation.getAz();
 
-        if(Math.abs(pitch) < 10 && Math.abs(roll) < 5)
+        if(Math.abs(pitch) < 45 && Math.abs(roll) < 20)
             return ANGLE;
         else if(pitch > 70 && pitch < 90)
             return DISTANCE;

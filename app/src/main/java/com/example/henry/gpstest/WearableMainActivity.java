@@ -159,10 +159,15 @@ public class WearableMainActivity extends Activity implements
 
             double direction = azimuth - bearingTo;
 
+            double threshold = 15;
+            double distanceTo = current_location.distanceTo(tagged_location);
+            if(distanceTo < 3+0)
+                threshold = 40;
+
             double difference = Math.abs(azimuth - bearingTo);
 //            display("Difference: "+difference);//debug
 
-            if(difference < 5)
+            if(difference < threshold)
                 vibrator.vibrate(1000);
             else
                 stopVibrate();
@@ -189,6 +194,11 @@ public class WearableMainActivity extends Activity implements
         long[] pattern = getPattern(pulses, time);
         vibrator.vibrate(pattern, -1);
         waitMS(pulses * 2 * time + 2000);
+        while(tag_location) {
+
+        }
+        vibrator.vibrate(pattern, -1);
+        waitMS(pulses * 2 * time + 2000);
         return command;
     }
 
@@ -199,16 +209,12 @@ public class WearableMainActivity extends Activity implements
             distanceTo = current_location.distanceTo(tagged_location);
             double nearestTen = round(distanceTo, 10);
             int pulses = (int)(nearestTen/10);
+            if(pulses == 0)
+                pulses = 1;
 
             int time = 500;
             long[] pattern = getPattern(pulses, time);
             vibrator.vibrate(pattern, -1);
-//            try {
-//                Thread.sleep(pulses * 2 * length + 2000);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-
             long expectedElapsedTime = pulses * 2 * time + 2000;
             waitMS(expectedElapsedTime);
 
@@ -233,14 +239,14 @@ public class WearableMainActivity extends Activity implements
     }
 
     private void displayToScreen(Command command, double value){
-        String text = "Command: "+command+" "+value+"\n";
+        String text = "Commands: "+command+" "+value+"\n";
                text +=orientation.toString()+"\n";
 //        String text = "GPS: "+hasGps()+"\n";
 //               text += "API: "+hasConnectedWearableAPI()+"\n";
                text += locationToString(current_location)+"\n";
 
             if(distance_beacon != null)
-                text += distance_beacon.getDistance();
+                text += distance_beacon.getRssi();
 //        if(tagged_location != null) {
 //            text += locationToString(tagged_location) + "\n";
 //            text += "Distance: "+current_location.distanceTo(tagged_location)+"\n"+current_distance+"\n";
@@ -307,14 +313,14 @@ public class WearableMainActivity extends Activity implements
 //        for(Sensor sensor : deviceSensors)
 //            display(sensor.toString());
 
-        current_location = new Location("");
-        current_location.setLatitude(-41.287502);
-        current_location.setLongitude(174.760777);
+//        current_location = new Location("");
+//        current_location.setLatitude(-41.287502);
+//        current_location.setLongitude(174.760777);
 
-        tagged_location = new Location("");
+//        tagged_location = new Location("");
         //122
-        tagged_location.setLatitude(-41.287312);
-        tagged_location.setLongitude(174.760955);
+//        tagged_location.setLatitude(-41.287312);
+//        tagged_location.setLongitude(174.760955);
         //121 Upland Road
 //        tagged_location.setLatitude(-41.287644);
 //        tagged_location.setLongitude(174.760831);
@@ -394,8 +400,8 @@ public class WearableMainActivity extends Activity implements
 
         LocationRequest locationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(100)
-                .setFastestInterval(10);
+                .setInterval(1000)
+                .setFastestInterval(1000);
 
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, locationRequest, this);
     }
@@ -623,7 +629,7 @@ public class WearableMainActivity extends Activity implements
 
     private void tagLocation(){
         tag_location = true;
-//        display("Tagging Location, please do not move");
+        display("Tagging Location, please do not move");
     }
 
     private void resetTagLocation(){
@@ -645,6 +651,7 @@ public class WearableMainActivity extends Activity implements
             location.setTime(tagLocationKalman.get_TimeStamp());
             tagged_location = new Location(location);
             tag_location = false;
+            display("Tagging: "+samples+"/"+SAMPLES_REQUIRED);
             return true;
         }
         return false;
