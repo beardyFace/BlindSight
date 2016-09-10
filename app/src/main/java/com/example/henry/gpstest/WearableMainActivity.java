@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -97,9 +98,9 @@ public class WearableMainActivity extends Activity implements
     //UI display
     private EditText text;
     private Button tag_button;
+    private DrawView drawView;
 
 //    private final Handler handler = new Handler();
-
     private final Runnable command_runner = new Runnable() {
         @Override
         public void run() {
@@ -112,9 +113,7 @@ public class WearableMainActivity extends Activity implements
 
     private Thread command_thread = new Thread(command_runner);
     private void scheduleMain(){
-//        AsyncTask.execute(command_runner);
         command_thread.start();
-//        handler.postDelayed(command_runner, 10);
     }
 //    private volatile boolean isRunning = false;
 //    private final Timer timer = new Timer();
@@ -161,7 +160,7 @@ public class WearableMainActivity extends Activity implements
 
             double threshold = 15;
             double distanceTo = current_location.distanceTo(tagged_location);
-            if(distanceTo < 3+0)
+            if(distanceTo < 30)
                 threshold = 40;
 
             double difference = Math.abs(azimuth - bearingTo);
@@ -268,6 +267,10 @@ public class WearableMainActivity extends Activity implements
         setContentView(R.layout.activity_wearable_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+//        drawView = new DrawView(this);
+//        drawView.setBackgroundColor(Color.WHITE);
+//        setContentView(drawView);
+
         tag_button = (Button) findViewById(R.id.geoButton);
         tag_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -282,7 +285,7 @@ public class WearableMainActivity extends Activity implements
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
 //                .addApi(AppIndex.API)
-                .addApi(Wearable.API)  // used for data layer API
+//                .addApi(Wearable.API)  // used for data layer API
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
@@ -328,7 +331,14 @@ public class WearableMainActivity extends Activity implements
 //        tagged_location.setLatitude(-41.289011);
 //        tagged_location.setLongitude(174.761843);
 
-//        timer.scheduleAtFixedRate(task, delay, period);
+        current_location = new Location("");
+        current_location.setLatitude(-36.876400);
+        current_location.setLongitude(174.772313);
+
+        tagged_location = new Location("");
+        tagged_location.setLatitude(-36.876275);
+        tagged_location.setLongitude(174.772201);
+
         scheduleMain();
     }
 
@@ -476,8 +486,8 @@ public class WearableMainActivity extends Activity implements
     public void onAccuracyChanged(Sensor arg0, int arg1) {
     }
 
-    float[] gravity = new float[3];
-    float[] geomag = new float[3];
+    private float[] gravity = new float[3];
+    private float[] geomag = new float[3];
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -543,56 +553,28 @@ public class WearableMainActivity extends Activity implements
         try {
 ;            beaconManager.startRangingBeaconsInRegion(new Region("myRangingUniqueId", Identifier.parse(UUID), null, null));
         } catch (RemoteException e) {    }
-//        display("here");
-//        beaconManager.addMonitorNotifier(new MonitorNotifier() {
-//            @Override
-//            public void didEnterRegion(Region region) {
-//                display("I just saw an beacon for the first time!");
-//            }
-//
-//            @Override
-//            public void didExitRegion(Region region) {
-//                display("I no longer see an beacon");
-//            }
-//
-//            @Override
-//            public void didDetermineStateForRegion(int state, Region region) {
-//                display("I have just switched from seeing/not seeing beacons: "+state + " " + region);
-//            }
-//        });
-//
-//        try {
-//            beaconManager.startMonitoringBeaconsInRegion(new Region("myMonitoringUniqueId", Identifier.parse(UUID), null, null));
-//        } catch (RemoteException e) {
-//            display(e.getMessage());
-//        }
     }
 
     private void stopVibrate(){
         vibrator.cancel();
     }
 
-    private void setVibrationPattern(double distance){
-        //TODO
-        //Tweak this equation to allow for communicating distance from location.
-        //Needs to be noticeably different at a range of ~200m? maybe
-        //To add: Compass/Bluetooth to calculate distance better
-        //Compass will help get bearing at least. current problem.
-        distance = round(distance);
-        if(distance == 0)
-            distance = 1;//min of 1m error
-
-        long timing = (long)(100*distance);
-
-        long[] pattern = new long[2];
-        for(int i = 0; i < pattern.length; i++) {
-            if (i % 2 == 0)
-                pattern[i] = timing;
-            else
-                pattern[i] = 100;
-        }
-        vibrator.vibrate(pattern, 0);
-    }
+//    private void setVibrationPattern(double distance){
+//        distance = round(distance);
+//        if(distance == 0)
+//            distance = 1;//min of 1m error
+//
+//        long timing = (long)(100*distance);
+//
+//        long[] pattern = new long[2];
+//        for(int i = 0; i < pattern.length; i++) {
+//            if (i % 2 == 0)
+//                pattern[i] = timing;
+//            else
+//                pattern[i] = 100;
+//        }
+//        vibrator.vibrate(pattern, 0);
+//    }
 
     private double round(double i){
         return round(i, 10);
