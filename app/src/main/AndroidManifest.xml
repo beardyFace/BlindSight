@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <!--<uses-feature android:name="android.hardware.type.watch" />-->
 
@@ -36,26 +37,9 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
-        <!--<service-->
-            <!--android:name="org.altbeacon.beacon.service.BeaconService"-->
-            <!--android:enabled="true"-->
-            <!--android:exported="true"-->
-            <!--tools:replace="android:exported"-->
-            <!--android:isolatedProcess="false"-->
-            <!--android:label="beacon" >-->
-        <!--</service>-->
-        <!--<service-->
-            <!--android:name="org.altbeacon.beacon.BeaconIntentProcessor"-->
-            <!--android:enabled="true" >-->
-        <!--</service>-->
-
-        <!--<receiver android:name="org.altbeacon.beacon.startup.StartupBroadcastReceiver">-->
-            <!--<intent-filter>-->
-                <!--<action android:name="android.intent.action.BOOT_COMPLETED"/>-->
-                <!--<action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>-->
-                <!--<action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/>-->
-            <!--</intent-filter>-->
-        <!--</receiver>-->
+        <service
+            android:name=".CommandService"
+            android:enabled="true" />
 
     </application>
 
