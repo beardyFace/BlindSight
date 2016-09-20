@@ -31,6 +31,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.wearable.Wearable;
 
 /**
  * Created by Henry on 17-Sep-16.
@@ -86,7 +87,7 @@ public class CommandService extends Service implements
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
 //                .addApi(AppIndex.API)
-//                .addApi(Wearable.API)  // used for data layer API
+                .addApi(Wearable.API)  // used for data layer API
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
@@ -105,6 +106,7 @@ public class CommandService extends Service implements
 
         command_thread.start();
 //        Toast.makeText(this, "Started", Toast.LENGTH_SHORT).show();
+        mGoogleApiClient.connect();
     }
 
     @Override
@@ -126,7 +128,6 @@ public class CommandService extends Service implements
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        mGoogleApiClient.connect();
         startLocationUpdates();
     }
 
@@ -177,7 +178,7 @@ public class CommandService extends Service implements
                 double pitch = Math.toDegrees(orientVals[1]);
                 double roll = Math.toDegrees(orientVals[2]);
                 orientation.update(azimuth, pitch, roll);
-//                updateOrientation = true;
+//                updateOrientation = true;z
             }
         }
     }
@@ -191,12 +192,14 @@ public class CommandService extends Service implements
     //Local methods
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
+    private boolean location_working = false;
     public void startLocationUpdates(){
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 //            display("Permissions not set, Failed to connect\n");
+            sendMessage("No Location");
             return;
         }
-
+        location_working = true;
         LocationRequest locationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setInterval(100)
@@ -294,6 +297,7 @@ public class CommandService extends Service implements
         String text = "Commands: "+command+" "+value+"\n";
         text +=orientation.toString()+"\n";
         text += locationToString(current_location)+"\n";
+        text += location_working+"\n";
         sendMessage(text);
     }
 

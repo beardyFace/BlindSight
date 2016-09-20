@@ -9,7 +9,7 @@ public class LocationTagger {
 
     private final float ACCURACY_DECAYS_TIME = 0.1f;
 
-    private final int SAMPLES_REQUIRED = 10;
+    private final int SAMPLES_REQUIRED = 5;
     private int samples = 0;
 
     private boolean tagging = false;

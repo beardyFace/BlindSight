@@ -13,17 +13,18 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <!--<uses-feature android:name="android.hardware.type.watch" />-->
-
     <application>
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/icon"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault">
 
+        <!--android:label="@string/title_activity_wearable_main"-->
         <activity
             android:name=".WearableMainActivity"
-            android:label="@string/title_activity_wearable_main">
+            android:label="@string/app_name"
+            android:icon="@mipmap/icon">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

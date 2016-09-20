@@ -13,6 +13,9 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.renderscript.ScriptGroup;
 import android.speech.RecognizerIntent;
+import android.support.wearable.view.DismissOverlayView;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -24,6 +27,8 @@ import java.util.List;
 public class WearableMainActivity extends Activity {
 
     //UI display
+    private DismissOverlayView mDismissOverlay;
+    private GestureDetector mDetector;
     private EditText text;
     private Button apeech_button;
 //    private final Intent command_service = new Intent(WearableMainActivity.this, CommandService.class);
@@ -45,8 +50,25 @@ public class WearableMainActivity extends Activity {
         text = (EditText) findViewById(R.id.editText);
         text.setText("Connecting to GPS");
 
+        // Obtain the DismissOverlayView element
+        mDismissOverlay = (DismissOverlayView) findViewById(R.id.dismiss_overlay);
+        mDismissOverlay.setIntroText("Hold screen to close app");
+        mDismissOverlay.showIntroIfNecessary();
+
+        // Configure a gesture detector
+        mDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            public void onLongPress(MotionEvent ev) {
+                mDismissOverlay.show();
+            }
+        });
 //        command_service.setCommand(Command.EMPTY);
 //        startService(command_service);
+    }
+
+    // Capture long presses
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        return mDetector.onTouchEvent(ev) || super.onTouchEvent(ev);
     }
 
     private static final int SPEECH_REQUEST_CODE = 0;
