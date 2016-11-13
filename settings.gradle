@@ -1,1 +1,1 @@
-include ':app'
+include ':guidewatchmobile', ':guidewatchwear', ':guidewatch'
