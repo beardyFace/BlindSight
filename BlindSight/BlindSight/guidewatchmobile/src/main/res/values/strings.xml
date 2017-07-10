@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Guide Watch</string>
+    <string name="title_activity_wearable_main">MainActivity</string>
+</resources>

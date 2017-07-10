@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/BlindSight.iml" filepath="$PROJECT_DIR$/BlindSight.iml" />
+      <module fileurl="file://$PROJECT_DIR$/guidewatch/guidewatch.iml" filepath="$PROJECT_DIR$/guidewatch/guidewatch.iml" />
+      <module fileurl="file://$PROJECT_DIR$/guidewatchmobile/guidewatchmobile.iml" filepath="$PROJECT_DIR$/guidewatchmobile/guidewatchmobile.iml" />
+      <module fileurl="file://$PROJECT_DIR$/guidewatchwear/guidewatchwear.iml" filepath="$PROJECT_DIR$/guidewatchwear/guidewatchwear.iml" />
+    </modules>
+  </component>
+</project>
