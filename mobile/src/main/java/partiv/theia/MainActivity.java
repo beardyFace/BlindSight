@@ -33,6 +33,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private Button buttons[] = new Button[6];
     private ProgressBar pBar;
 
+    public int[] locations;
+
     Messenger mService = null;
 
     @Override
@@ -109,6 +111,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 switch(current_id)
                 {
                     case R.id.button1:
+                        Tagger tag = new Tagger();
+                        tag.tag();
                         sayHello(null);
                         break;
                     case R.id.button2:
