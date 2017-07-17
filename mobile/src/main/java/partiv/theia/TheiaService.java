@@ -55,7 +55,7 @@ public class TheiaService extends Service implements
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-
+        locationUpdates();
     }
 
     @Override
