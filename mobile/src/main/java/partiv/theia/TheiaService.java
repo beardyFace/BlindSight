@@ -13,6 +13,7 @@ import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -27,7 +28,7 @@ public class TheiaService extends Service implements
         LocationListener
 {
     private GoogleApiClient googleApiClient;
-    static final int MSG_SAY_HELLO = 1;
+    private Task current_task;
 
     @Override
     public void onCreate(){
@@ -49,12 +50,14 @@ public class TheiaService extends Service implements
     }
 
     @Override
-    public void onLocationChanged(Location location) {
-
+    public void onLocationChanged(Location location)
+    {
+        Log.d("Location", Double.toString(location.getLatitude()));
     }
 
     @Override
-    public void onConnected(@Nullable Bundle bundle) {
+    public void onConnected(@Nullable Bundle bundle)
+    {
         locationUpdates();
     }
 
@@ -83,13 +86,8 @@ public class TheiaService extends Service implements
     class IncomingHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MSG_SAY_HELLO:
-                    Toast.makeText(getApplicationContext(), "hello!", Toast.LENGTH_SHORT).show();
-                    break;
-                default:
-                    super.handleMessage(msg);
-            }
+            current_task = Task.getTask(msg.what);
+            Log.d("Command", Integer.toString(msg.what));
         }
     }
 

@@ -19,6 +19,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
+
+import java.util.ArrayList;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements View.OnTouchListener
@@ -30,7 +32,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private boolean isBound = false;
     private TextToSpeech t1;
     private int current_id;
-    private Button buttons[] = new Button[6];
+    private Button buttons[] = new Button[7];
     private ProgressBar pBar;
 
     public int[] locations;
@@ -111,20 +113,23 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 switch(current_id)
                 {
                     case R.id.button1:
-                        Tagger tag = new Tagger();
-                        tag.tag();
-                        sayHello(null);
+                        sendTask(Task.TAG);
                         break;
                     case R.id.button2:
-                        displaySpeechRecognizer();
+                        sendTask(Task.SAVE);
                         break;
                     case R.id.button3:
                         break;
                     case R.id.button4:
+                        sendTask(Task.RETURN);
                         break;
                     case R.id.button5:
+                        sendTask(Task.RETURN);
                         break;
                     case R.id.button6:
+                        break;
+                    case R.id.button7:
+                        displaySpeechRecognizer();
                         break;
                     default:
                         break;
@@ -147,6 +152,27 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         startActivityForResult(intent, SPEECH_REQUEST_CODE);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SPEECH_REQUEST_CODE && resultCode == RESULT_OK) {
+            ArrayList<String> voice_results = data.getStringArrayListExtra(
+                    RecognizerIntent.EXTRA_RESULTS);
+            Task task = Task.getTask(voice_results);
+            sendTask(task);
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void sendTask(Task task)
+    {
+        if (!isBound) return;
+        Message msg = Message.obtain(null, task.getId(), 0, 0);
+        try {
+            mService.send(msg);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public boolean onTouch(View view, MotionEvent event) {
@@ -190,14 +216,4 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             isBound = false;
         }
     };
-
-    public void sayHello(View v) {
-        if (!isBound) return;
-        Message msg = Message.obtain(null, TheiaService.MSG_SAY_HELLO, 0, 0);
-        try {
-            mService.send(msg);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-    }
 }
