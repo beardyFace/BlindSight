@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -29,7 +30,8 @@ public class TheiaService extends Service implements
 {
     private GoogleApiClient googleApiClient;
     private Task current_task;
-
+    private Location current_location;
+    private Tagger tagger;
     @Override
     public void onCreate(){
         super.onCreate();
@@ -40,6 +42,8 @@ public class TheiaService extends Service implements
                 .addOnConnectionFailedListener(this)
                 .build();
         googleApiClient.connect();
+
+        tagger = new Tagger();
     }
 
     @Override
@@ -52,7 +56,7 @@ public class TheiaService extends Service implements
     @Override
     public void onLocationChanged(Location location)
     {
-        Log.d("Location", Double.toString(location.getLatitude()));
+        current_location = location;
     }
 
     @Override
@@ -83,12 +87,70 @@ public class TheiaService extends Service implements
         LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
     }
 
+    private volatile Messenger replyMessanger;
+
     class IncomingHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
+            replyMessanger = msg.replyTo;
             current_task = Task.getTask(msg.what);
+            commandExe();
             Log.d("Command", Integer.toString(msg.what));
         }
+    }
+
+    private void commandExe (){
+        switch (current_task){
+            case TAG:
+                tag();
+                break;
+            case SAVE:
+                break;
+            case RETURN:
+                ret();
+                break;
+            case RESET:
+                break;
+        }
+    }
+
+    private void tag(){
+        tagger.setLocation(current_location);
+        debugging("1", tagger.getLocation());
+    }
+
+    private void ret(){
+
+        if(tagger.getLocation() != null && current_location != null) {
+            float distanceInMeters = current_location.distanceTo(tagger.getLocation());
+            debugging("3", current_location);
+            sendMessage("2 / " + Float.toString(distanceInMeters));
+        }
+
+    }
+
+    private void debugging(String numDebug, Location location){
+        String geoLoc = "";
+        //Location location = tagger.getLocation();
+
+        geoLoc += "Lat: ";
+        geoLoc += Double.toString(location.getLatitude());
+        geoLoc += "\nLon: ";
+        geoLoc += Double.toString(location.getLongitude());
+
+        sendMessage(numDebug + " / " + geoLoc);
+    }
+
+    private void sendMessage(String msg) {
+        // do stuff
+        if (replyMessanger != null)
+            try {
+                Message message = new Message();
+                message.obj = msg;
+                replyMessanger.send(message);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
     }
 
     final Messenger mMessenger = new Messenger(new IncomingHandler());

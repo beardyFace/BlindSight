@@ -7,8 +7,8 @@ import java.util.Collections;
 
     enum Task {
     EMPTY(0),
-    TAG(1, "tag"),
-    SAVE(2, "save"),
+    TAG(1, "tag", "tag location"),
+    SAVE(2, "save", "save location"),
     RETURN(3, "return"),
     RESET(4, "reset");
 

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
@@ -32,9 +33,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private boolean isBound = false;
     private TextToSpeech t1;
     private int current_id;
-    private Button buttons[] = new Button[7];
+    private Button buttons[] = new Button[8];
     private ProgressBar pBar;
-
     public int[] locations;
 
     Messenger mService = null;
@@ -131,6 +131,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     case R.id.button7:
                         displaySpeechRecognizer();
                         break;
+                    case R.id.button8:
+                        displaySpeechRecognizer();
                     default:
                         break;
                 }
@@ -167,6 +169,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     {
         if (!isBound) return;
         Message msg = Message.obtain(null, task.getId(), 0, 0);
+        msg.replyTo = replyMessenger;
         try {
             mService.send(msg);
         } catch (RemoteException e) {
@@ -216,4 +219,26 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             isBound = false;
         }
     };
+
+    private Messenger replyMessenger = new Messenger(new HandlerReplyMsg());
+
+    private class HandlerReplyMsg extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            Log.d("FUCK", "FUCK ME");
+            super.handleMessage(msg);
+            String recdMessage = msg.obj.toString(); //msg received from service
+            if(recdMessage.charAt(0) == '1') {
+                buttons[6].setText(recdMessage);
+            }
+            else if(recdMessage.charAt(0) == '3')
+            {
+                buttons[5].setText(recdMessage);
+            }
+            else
+            {
+                buttons[7].setText(recdMessage);
+            }
+        }
+    }
 }
