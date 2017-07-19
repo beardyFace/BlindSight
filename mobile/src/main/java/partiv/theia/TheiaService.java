@@ -29,9 +29,22 @@ public class TheiaService extends Service implements
         LocationListener
 {
     private GoogleApiClient googleApiClient;
-    private Task current_task;
+    private Task current_task = Task.EMPTY;
     private Location current_location;
     private Tagger tagger;
+    private Thread thread = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            while(!thread.isInterrupted()) {
+                if (current_task != Task.EMPTY) {
+                    Log.d("Thread", "OK");
+                    commandExe();
+                }
+            }
+        }
+    }
+    );
+
     @Override
     public void onCreate(){
         super.onCreate();
@@ -42,7 +55,7 @@ public class TheiaService extends Service implements
                 .addOnConnectionFailedListener(this)
                 .build();
         googleApiClient.connect();
-
+        thread.start();
         tagger = new Tagger();
     }
 
@@ -57,6 +70,8 @@ public class TheiaService extends Service implements
     public void onLocationChanged(Location location)
     {
         current_location = location;
+        Log.d("Lattitude", Double.toString(location.getLatitude()));
+        Log.d("Longditude", Double.toString(location.getLongitude()));
     }
 
     @Override
@@ -94,7 +109,7 @@ public class TheiaService extends Service implements
         public void handleMessage(Message msg) {
             replyMessanger = msg.replyTo;
             current_task = Task.getTask(msg.what);
-            commandExe();
+            //commandExe();
             Log.d("Command", Integer.toString(msg.what));
         }
     }
@@ -110,6 +125,10 @@ public class TheiaService extends Service implements
                 ret();
                 break;
             case RESET:
+                break;
+            case EMPTY:
+                break;
+            default:
                 break;
         }
     }

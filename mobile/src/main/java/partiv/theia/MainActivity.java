@@ -225,7 +225,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private class HandlerReplyMsg extends Handler {
         @Override
         public void handleMessage(Message msg) {
-            Log.d("FUCK", "FUCK ME");
             super.handleMessage(msg);
             String recdMessage = msg.obj.toString(); //msg received from service
             if(recdMessage.charAt(0) == '1') {
