@@ -15,7 +15,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -32,18 +31,26 @@ public class TheiaService extends Service implements
     private Task current_task = Task.EMPTY;
     private Location current_location;
     private Tagger tagger;
+    private KalmanFilter KF;
+    private Sensors sensors;
+    private ProcessLocation PL;
     private Thread thread = new Thread(new Runnable() {
         @Override
         public void run() {
-            while(!thread.isInterrupted()) {
+            while(true) {
                 if (current_task != Task.EMPTY) {
-                    Log.d("Thread", "OK");
                     commandExe();
+                }
+                else
+                {
+                    locationSamples = 0;
                 }
             }
         }
     }
     );
+
+    private int locationSamples = 0;
 
     @Override
     public void onCreate(){
@@ -55,8 +62,11 @@ public class TheiaService extends Service implements
                 .addOnConnectionFailedListener(this)
                 .build();
         googleApiClient.connect();
-        thread.start();
         tagger = new Tagger();
+        PL = new ProcessLocation();
+        KF = new KalmanFilter(1);
+        sensors = new Sensors(this);
+        thread.start();
     }
 
     @Override
@@ -69,9 +79,16 @@ public class TheiaService extends Service implements
     @Override
     public void onLocationChanged(Location location)
     {
-        current_location = location;
+        KF.process(location);
+        current_location = KF.returnLocation();
+        if(current_task == Task.TAG || current_task == Task.RETURN)
+        {
+            PL.addLocation(location);
+        }
+        locationSamples++;
         Log.d("Lattitude", Double.toString(location.getLatitude()));
         Log.d("Longditude", Double.toString(location.getLongitude()));
+        Log.d("Accuracy", Float.toString(location.getAccuracy()));
     }
 
     @Override
@@ -109,7 +126,7 @@ public class TheiaService extends Service implements
         public void handleMessage(Message msg) {
             replyMessanger = msg.replyTo;
             current_task = Task.getTask(msg.what);
-            //commandExe();
+            thread.interrupt();
             Log.d("Command", Integer.toString(msg.what));
         }
     }
@@ -133,19 +150,27 @@ public class TheiaService extends Service implements
         }
     }
 
-    private void tag(){
-        tagger.setLocation(current_location);
-        debugging("1", tagger.getLocation());
+    private void tag()
+    {
+        if(locationSamples >= Tagger.TAG_SAMPLE_SIZE) {
+            tagger.setLocation(PL.average());
+            current_task = Task.EMPTY;
+            debugging("1", tagger.getLocation());
+            PL.clear();
+        }
     }
 
     private void ret(){
-
-        if(tagger.getLocation() != null && current_location != null) {
-            float distanceInMeters = current_location.distanceTo(tagger.getLocation());
-            debugging("3", current_location);
-            sendMessage("2 / " + Float.toString(distanceInMeters));
+        if(locationSamples >= 5)
+        {
+            if (tagger.getLocation() != null && current_location != null) {
+                float distanceInMeters = PL.average().distanceTo(tagger.getLocation());
+                debugging("3", PL.average());
+                sendMessage("2 / " + Float.toString(distanceInMeters));
+                current_task = Task.EMPTY;
+                PL.clear();
+            }
         }
-
     }
 
     private void debugging(String numDebug, Location location){

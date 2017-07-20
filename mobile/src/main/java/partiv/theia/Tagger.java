@@ -4,25 +4,33 @@ import android.location.Location;
 import android.util.Log;
 
 public class Tagger{
-
+    public static final int TAG_SAMPLE_SIZE = 5;
     private Location tag_location;
+    private boolean status = false;
 
-    Tagger() {
-        Log.d("tagger run", "tagger ran");
+    Tagger()
+    {
     }
 
     public Location getLocation() {
         return tag_location;
     }
 
-    public void setLocation(Location location) {
-        this.tag_location = location;
+    public void setLocation(Location location)
+    {
+            this.tag_location = location;
+            this.status = true;
     }
 
-    public float tag() {
-        float currentLocation;
-        currentLocation = 2;
-        return currentLocation;
+    public boolean status()
+    {
+        return this.status;
     }
+
+    public void setStatus(boolean status)
+    {
+        this.status = status;
+    }
+
 
 }
