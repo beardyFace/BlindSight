@@ -72,7 +72,7 @@ public class TheiaService extends Service implements
     @Override
     public void onDestroy() {
         googleApiClient.disconnect();
-
+        sensors.unRegister();
         super.onDestroy();
     }
 
@@ -152,6 +152,8 @@ public class TheiaService extends Service implements
 
     private void tag()
     {
+        /*sensors.resetSteps();
+        current_task = Task.EMPTY;*/
         if(locationSamples >= Tagger.TAG_SAMPLE_SIZE) {
             tagger.setLocation(PL.average());
             current_task = Task.EMPTY;
@@ -161,6 +163,9 @@ public class TheiaService extends Service implements
     }
 
     private void ret(){
+        /*sendMessage("2 / " + Double.toString(sensors.getDistance()));
+        sensors.resetSteps();
+        current_task = Task.EMPTY;*/
         if(locationSamples >= 5)
         {
             if (tagger.getLocation() != null && current_location != null) {
