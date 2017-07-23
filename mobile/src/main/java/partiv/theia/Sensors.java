@@ -53,7 +53,10 @@ public class Sensors implements SensorEventListener
         }
         else if(event.sensor.getType() == Sensor.TYPE_STEP_DETECTOR)
         {
-            steps++;
+            if (event.values[0] == 1.0f)
+            {
+                steps++;
+            }
         }
 
         float[] R = new float[9];

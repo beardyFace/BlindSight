@@ -31,6 +31,7 @@ public class TheiaService extends Service implements
     private Task current_task = Task.EMPTY;
     private Location current_location;
     private Tagger tagger;
+    private Haptic haptic;
     private KalmanFilter KF;
     private Sensors sensors;
     private ProcessLocation PL;
@@ -41,16 +42,27 @@ public class TheiaService extends Service implements
                 if (current_task != Task.EMPTY) {
                     commandExe();
                 }
-                else
+                /*else
                 {
                     locationSamples = 0;
-                }
+                }*/
             }
         }
     }
     );
 
+
+
     private int locationSamples = 0;
+
+    private void sleep(long time)
+    {
+        try {
+            thread.sleep(time);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public void onCreate(){
@@ -65,6 +77,7 @@ public class TheiaService extends Service implements
         tagger = new Tagger();
         PL = new ProcessLocation();
         KF = new KalmanFilter(1);
+        haptic = new Haptic(this);
         sensors = new Sensors(this);
         thread.start();
     }
@@ -73,6 +86,7 @@ public class TheiaService extends Service implements
     public void onDestroy() {
         googleApiClient.disconnect();
         sensors.unRegister();
+        Log.d("Service", "Destroy");
         super.onDestroy();
     }
 
@@ -126,7 +140,6 @@ public class TheiaService extends Service implements
         public void handleMessage(Message msg) {
             replyMessanger = msg.replyTo;
             current_task = Task.getTask(msg.what);
-            thread.interrupt();
             Log.d("Command", Integer.toString(msg.what));
         }
     }
@@ -152,21 +165,39 @@ public class TheiaService extends Service implements
 
     private void tag()
     {
-        /*sensors.resetSteps();
-        current_task = Task.EMPTY;*/
-        if(locationSamples >= Tagger.TAG_SAMPLE_SIZE) {
+        sensors.resetSteps();
+        current_task = Task.EMPTY;
+        /*if(locationSamples >= Tagger.TAG_SAMPLE_SIZE) {
             tagger.setLocation(PL.average());
             current_task = Task.EMPTY;
             debugging("1", tagger.getLocation());
             PL.clear();
-        }
+        }*/
     }
+    private boolean firstTime = true;
+    private double distance;
 
     private void ret(){
-        /*sendMessage("2 / " + Double.toString(sensors.getDistance()));
-        sensors.resetSteps();
-        current_task = Task.EMPTY;*/
-        if(locationSamples >= 5)
+        if(firstTime)
+        {
+            distance = sensors.getDistance();
+            sendMessage("2 / " + Double.toString(distance));
+            sensors.resetSteps();
+            firstTime = false;
+            sleep(10);
+        }
+        else
+        {
+            sendMessage("3 / " + Double.toString(sensors.getDistance()));
+            if(Math.abs(distance - sensors.getDistance()) <= 1)
+            {
+                haptic.vibrate();
+                firstTime = true;
+                current_task = Task.EMPTY;
+            }
+            sleep(10);
+        }
+        /*if(locationSamples >= 5)
         {
             if (tagger.getLocation() != null && current_location != null) {
                 float distanceInMeters = PL.average().distanceTo(tagger.getLocation());
@@ -175,7 +206,7 @@ public class TheiaService extends Service implements
                 current_task = Task.EMPTY;
                 PL.clear();
             }
-        }
+        }*/
     }
 
     private void debugging(String numDebug, Location location){

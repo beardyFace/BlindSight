@@ -234,6 +234,11 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             {
                 buttons[5].setText(recdMessage);
             }
+            else if(recdMessage.charAt(0) == '4')
+            {
+                String toSpeak = "Arrived at destination";
+                t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null, null);
+            }
             else
             {
                 buttons[7].setText(recdMessage);
