@@ -12,7 +12,6 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.speech.RecognizerIntent;
-import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -20,9 +19,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
-
 import java.util.ArrayList;
-import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements View.OnTouchListener
 {
@@ -31,7 +28,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private int i = 0;
     private boolean start = false;
     private boolean isBound = false;
-    private TextToSpeech t1;
+    private VoiceFeedback Vf;
     private int current_id;
     private Button buttons[] = new Button[8];
     private ProgressBar pBar;
@@ -47,36 +44,28 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         initButtons();
         initTimer();
-        t1 = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener()
-        {
-            @Override
-            public void onInit(int status) {
-                if(status != TextToSpeech.ERROR) {
-                    t1.setLanguage(Locale.UK);
-                }
-            }
-        });
+        Vf = new VoiceFeedback(this);
+        bindService(new Intent(this, TheiaService.class), connection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (isBound) {
+            unbindService(connection);
+            isBound = false;
+        }
     }
 
     @Override
     public void onStart()
     {
         super.onStart();
-        bindService(new Intent(this, TheiaService.class), connection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        if (isBound) {
-            unbindService(connection);
-            isBound = false;
-        }
     }
 
     private void initButtons()
@@ -184,8 +173,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         {
             Log.d("TouchTest", "Touch down");
             if(!start) {
-                String toSpeak = ((Button) findViewById(current_id)).getText().toString();
-                t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null, null);
+                Vf.speak(((Button) findViewById(current_id)).getText().toString());
                 mCountDownTimer.start();
                 start = true;
             }
@@ -236,8 +224,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
             else if(recdMessage.charAt(0) == '4')
             {
-                String toSpeak = "Arrived at destination";
-                t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null, null);
+                Vf.speak("Arrived at destination");
             }
             else
             {

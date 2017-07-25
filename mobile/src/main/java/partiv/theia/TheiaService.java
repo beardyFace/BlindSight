@@ -86,7 +86,6 @@ public class TheiaService extends Service implements
     public void onDestroy() {
         googleApiClient.disconnect();
         sensors.unRegister();
-        Log.d("Service", "Destroy");
         super.onDestroy();
     }
 
