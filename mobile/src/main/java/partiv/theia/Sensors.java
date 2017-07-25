@@ -75,14 +75,18 @@ public class Sensors implements SensorEventListener
         //Log.d("Accerometer", Float.toString(x) + " " + Float.toString(y) + " " + Float.toString(z));
     }
 
-    public void resetSteps()
+    public void setSteps(int steps)
     {
-        this.steps = 0;
+        this.steps = steps;
+    }
+    public int getSteps()
+    {
+        return this.steps;
     }
 
     public double getDistance()
     {
-        return 0.8 * steps;
+        return 0.76 * (steps * 0.9);
     }
 
     @Override

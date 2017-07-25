@@ -35,17 +35,27 @@ public class TheiaService extends Service implements
     private KalmanFilter KF;
     private Sensors sensors;
     private ProcessLocation PL;
+    private boolean newTask = true;
+
+    private volatile boolean running = true;
+    private final Object lockObj = new Object();
     private Thread thread = new Thread(new Runnable() {
         @Override
         public void run() {
-            while(true) {
+            while(running) {
                 if (current_task != Task.EMPTY) {
-                    commandExe();
+                    execute();
                 }
-                /*else
+                else
                 {
-                    locationSamples = 0;
-                }*/
+                    synchronized (lockObj) {
+                        try{
+                            lockObj.wait();
+                        } catch(InterruptedException e){
+                            e.printStackTrace();
+                        }
+                    }
+                }
             }
         }
     }
@@ -139,11 +149,16 @@ public class TheiaService extends Service implements
         public void handleMessage(Message msg) {
             replyMessanger = msg.replyTo;
             current_task = Task.getTask(msg.what);
+            newTask = true;
+            synchronized (lockObj)
+            {
+                lockObj.notify();
+            }
             Log.d("Command", Integer.toString(msg.what));
         }
     }
 
-    private void commandExe (){
+    private void execute (){
         switch (current_task){
             case TAG:
                 tag();
@@ -164,7 +179,7 @@ public class TheiaService extends Service implements
 
     private void tag()
     {
-        sensors.resetSteps();
+        sensors.setSteps(0);
         current_task = Task.EMPTY;
         /*if(locationSamples >= Tagger.TAG_SAMPLE_SIZE) {
             tagger.setLocation(PL.average());
@@ -173,16 +188,15 @@ public class TheiaService extends Service implements
             PL.clear();
         }*/
     }
-    private boolean firstTime = true;
     private double distance;
 
     private void ret(){
-        if(firstTime)
+        if(newTask)
         {
             distance = sensors.getDistance();
             sendMessage("2 / " + Double.toString(distance));
-            sensors.resetSteps();
-            firstTime = false;
+            sensors.setSteps(0);
+            newTask = false;
             sleep(10);
         }
         else
@@ -191,7 +205,6 @@ public class TheiaService extends Service implements
             if(Math.abs(distance - sensors.getDistance()) <= 1)
             {
                 haptic.vibrate();
-                firstTime = true;
                 current_task = Task.EMPTY;
             }
             sleep(10);
