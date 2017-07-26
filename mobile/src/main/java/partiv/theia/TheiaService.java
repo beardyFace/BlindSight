@@ -62,7 +62,6 @@ public class TheiaService extends Service implements
     );
 
 
-
     private int locationSamples = 0;
 
     private void sleep(long time)
