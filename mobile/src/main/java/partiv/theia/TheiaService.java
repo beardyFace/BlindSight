@@ -32,8 +32,9 @@ public class TheiaService extends Service implements
     private Location current_location;
     private Tagger tagger;
     private Haptic haptic;
-    private KalmanFilter KF;
+    private Tracking tracking;
     private Sensors sensors;
+    private KalmanFilter KF;
     private ProcessLocation PL;
     private boolean newTask = true;
 
@@ -53,6 +54,10 @@ public class TheiaService extends Service implements
                             lockObj.wait();
                         } catch(InterruptedException e){
                             e.printStackTrace();
+                        }
+                        if(current_task == Task.EMPTY)
+                        {
+                            current_task = Task.TRACK;
                         }
                     }
                 }
@@ -86,8 +91,8 @@ public class TheiaService extends Service implements
         tagger = new Tagger();
         PL = new ProcessLocation();
         KF = new KalmanFilter(1);
+        sensors = new Sensors(this, lockObj);
         haptic = new Haptic(this);
-        sensors = new Sensors(this);
         thread.start();
     }
 
@@ -167,6 +172,9 @@ public class TheiaService extends Service implements
             case RETURN:
                 ret();
                 break;
+            case TRACK:
+                track();
+                break;
             case RESET:
                 break;
             case EMPTY:
@@ -176,10 +184,19 @@ public class TheiaService extends Service implements
         }
     }
 
+    private Position current;
     private void tag()
     {
-        sensors.setSteps(0);
+        if(tracking == null) {
+            tracking = new Tracking(sensors);
+        }
+        current = new Position(0.0, 0.0, sensors.getAngle());
+        sensors.setPosition(current);
+        tracking.addPosition(current);
         current_task = Task.EMPTY;
+        sendMessage("2 / X:" + Double.toString(current.getX()) + " Y:" + Double.toString(current.getY()));
+        sendMessage("3 / Angle change:" + Double.toString(Math.toDegrees(current.getAngle())));
+        sleep(10);
         /*if(locationSamples >= Tagger.TAG_SAMPLE_SIZE) {
             tagger.setLocation(PL.average());
             current_task = Task.EMPTY;
@@ -187,10 +204,21 @@ public class TheiaService extends Service implements
             PL.clear();
         }*/
     }
+
+    private void track()
+    {
+        if(current != null) {
+            sendMessage("2 / X:" + Double.toString(current.getX()) + " Y:" + Double.toString(current.getY()));
+            sendMessage("3 / Angle change:" + Double.toString(Math.toDegrees(current.getAngle())));
+            //tracking.addPosition(current);
+            current_task = Task.EMPTY;
+            sleep(10);
+        }
+    }
     private double distance;
 
     private void ret(){
-        if(newTask)
+        /*if(newTask)
         {
             distance = sensors.getDistance();
             sendMessage("2 / " + Double.toString(distance));
@@ -207,7 +235,7 @@ public class TheiaService extends Service implements
                 current_task = Task.EMPTY;
             }
             sleep(10);
-        }
+        }*/
         /*if(locationSamples >= 5)
         {
             if (tagger.getLocation() != null && current_location != null) {

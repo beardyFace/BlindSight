@@ -6,11 +6,12 @@ import java.util.Arrays;
 import java.util.Collections;
 
     enum Task {
-    EMPTY(0),
-    TAG(1, "tag", "tag location"),
-    SAVE(2, "save", "save location"),
-    RETURN(3, "return"),
-    RESET(4, "reset");
+        EMPTY(0),
+        TAG(1, "tag", "tag location"),
+        SAVE(2, "save", "save location"),
+        RETURN(3, "return"),
+        TRACK(4),
+        RESET(5, "reset");
 
 
     private final ArrayList<String> task_names = new ArrayList<String>();

@@ -18,11 +18,16 @@ public class Sensors implements SensorEventListener
     private float[] magnetic = new float[3];
     private float[] linearAcc = new float[3];
 
-    private double azimuth, pitch, roll;
+    private static final double STEP_SIZE = 0.76;
+    private int count;
+    private double azimuth_temp, azimuth, pitch, roll;
+    private Position position;
+    private Object lockObj;
 
-    Sensors(Context context)
+    Sensors(Context context, Object lockObj)
     {
         this.context = context;
+        this.lockObj = lockObj;
         mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
         mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_NORMAL);
@@ -56,6 +61,14 @@ public class Sensors implements SensorEventListener
             if (event.values[0] == 1.0f)
             {
                 steps++;
+                updatePosition();
+                /*if(steps % 5 == 0)
+                {*/
+                    synchronized (lockObj)
+                    {
+                        lockObj.notify();
+                    }
+                //}
             }
         }
 
@@ -66,9 +79,16 @@ public class Sensors implements SensorEventListener
         if (gravity != null && magnetic != null) {
             if (SensorManager.getRotationMatrix(R, I, gravity, magnetic)) {
                 SensorManager.getOrientation(R, orientation);
-                azimuth = Math.toDegrees(orientation[0]);
-                pitch = Math.toDegrees(orientation[1]);
-                roll = Math.toDegrees(orientation[2]);
+                azimuth_temp += orientation[0];
+                count++;
+                if(count == 10)
+                {
+                    azimuth = (azimuth_temp / count) + Math.PI;
+                    azimuth_temp = 0.0;
+                    count = 0;
+                }
+                pitch = orientation[1];
+                roll = orientation[2];
                 //Log.d("Orientation", Double.toString(azimuth) + " " + Double.toString(pitch) + " " + Double.toString(roll));
             }
         }
@@ -83,10 +103,30 @@ public class Sensors implements SensorEventListener
     {
         return this.steps;
     }
+    public double getAngle()
+    {
+        return this.azimuth;
+    }
+
+    public void setPosition(Position position)
+    {
+        this.position = position;
+    }
+
+    private void updatePosition()
+    {
+        if(position != null) {
+            double x, y, angle;
+            x = position.getX() + STEP_SIZE * Math.sin(azimuth);
+            y = position.getY() + STEP_SIZE * Math.cos(azimuth);
+            angle = Math.abs(position.getAngle() - azimuth);
+            position.setPosition(x, y, angle);
+        }
+    }
 
     public double getDistance()
     {
-        return 0.76 * (steps * 0.9);
+        return STEP_SIZE * (steps * 0.9);
     }
 
     @Override
