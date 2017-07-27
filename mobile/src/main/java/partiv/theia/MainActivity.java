@@ -12,11 +12,15 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.speech.RecognizerIntent;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import java.util.ArrayList;
@@ -30,9 +34,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private boolean isBound = false;
     private VoiceFeedback Vf;
     private int current_id;
+    LayoutInflater inflater;
+    ViewPager vp;
     private Button buttons[] = new Button[8];
     private ProgressBar pBar;
     public int[] locations;
+    private View pages[] = new View[2];
 
     Messenger mService = null;
 
@@ -42,11 +49,46 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        vp = (ViewPager)findViewById(R.id.viewPager);
+        vp.setAdapter(new MyPagesAdapter());
+        pages[0] = inflater.inflate(R.layout.swipe1, null);
+        pages[1] = inflater.inflate(R.layout.swipe2, null);
         initButtons();
         initTimer();
         Vf = new VoiceFeedback(this);
         bindService(new Intent(this, TheiaService.class), connection, Context.BIND_AUTO_CREATE);
+
     }
+
+    class MyPagesAdapter extends PagerAdapter
+    {
+
+        @Override
+        public int getCount() {
+            return pages.length;
+        }
+
+        @Override
+        public Object instantiateItem(ViewGroup container, int position)
+        {
+            ((ViewPager) container).addView(pages[position], 0);
+            return pages[position];
+        }
+
+        @Override
+        public boolean isViewFromObject(View view, Object object) {
+            return view==(View)object;
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object)
+        {
+            ((ViewPager) container).removeView((View)object);
+            object = null;
+        }
+    }
+
 
     @Override
     protected void onDestroy() {
@@ -75,9 +117,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             String buttonID = "button" + (i + 1);
             int resID = getResources().getIdentifier(buttonID, "id","partiv.theia");
 
-            buttons[i] = (Button) findViewById(resID);
+            buttons[i] = (Button) pages[0].findViewById(resID);
             buttons[i].setOnTouchListener(this);
-            pBar = (ProgressBar)findViewById(R.id.progressBar1);
+            pBar = (ProgressBar)pages[0].findViewById(R.id.progressBar1);
         }
     }
 
@@ -173,7 +215,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         {
             Log.d("TouchTest", "Touch down");
             if(!start) {
-                Vf.speak(((Button) findViewById(current_id)).getText().toString());
+                Vf.speak(((Button) pages[0].findViewById(current_id)).getText().toString());
                 mCountDownTimer.start();
                 start = true;
             }
