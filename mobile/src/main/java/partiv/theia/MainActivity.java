@@ -23,6 +23,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
+
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
+
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements View.OnTouchListener
@@ -42,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private View pages[] = new View[2];
 
     Messenger mService = null;
+    private LineGraphSeries<DataPoint> series;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -59,6 +65,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         Vf = new VoiceFeedback(this);
         bindService(new Intent(this, TheiaService.class), connection, Context.BIND_AUTO_CREATE);
 
+        // graph (debugging)
+       // updateGraph();
     }
 
     class MyPagesAdapter extends PagerAdapter
@@ -274,4 +282,17 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
         }
     }
+
+    /*private void updateGraph(){
+        GraphView graph = (GraphView) findViewById(R.id.graph);
+        LineGraphSeries<DataPoint> series = new LineGraphSeries<>(new DataPoint[] {
+                new DataPoint(0, 1),
+                new DataPoint(1, 5),
+                new DataPoint(2, 3),
+                new DataPoint(3, 2),
+                new DataPoint(4, 6)
+        });
+        graph.addSeries(series);
+    }*/
+
 }
