@@ -278,8 +278,4 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
-    public void clearCanvas(View v) {
-        customCanvas.clearCanvas();
-    }
-
 }

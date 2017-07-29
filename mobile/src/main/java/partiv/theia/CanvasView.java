@@ -21,6 +21,7 @@ public class CanvasView extends View {
     private Paint mPaint;
     private float mX, mY;
     private static final float TOLERANCE = 5;
+    private int cx = 100, cy = 100;
 
     public CanvasView(Context c, AttributeSet attrs) {
         super(c, attrs);
@@ -35,7 +36,7 @@ public class CanvasView extends View {
         mPaint.setColor(Color.RED);
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeJoin(Paint.Join.ROUND);
-        mPaint.setStrokeWidth(5f);
+        mPaint.setStrokeWidth(8f);
     }
 
     // override onSizeChanged
@@ -82,6 +83,16 @@ public class CanvasView extends View {
     // when ACTION_UP stop touch
     private void upTouch() {
         mPath.lineTo(mX, mY);
+        mPath.addCircle(cx, cy, 50, Path.Direction.CCW);
+        if (cx <= 1200 && cy == 100) {
+            cx += 100;
+        }
+        if (cx >= 1300 && cy <= 1400){
+            cy += 100;
+        }
+        if (cx >= 100 && cy == 1400) {
+            cx -= 100;
+        }
     }
 
     @Override
