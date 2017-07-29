@@ -24,9 +24,9 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 
-import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.series.DataPoint;
-import com.jjoe64.graphview.series.LineGraphSeries;
+//import com.jjoe64.graphview.GraphView;
+//import com.jjoe64.graphview.series.DataPoint;
+//import com.jjoe64.graphview.series.LineGraphSeries;
 
 import java.util.ArrayList;
 
@@ -47,8 +47,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private View pages[] = new View[2];
 
     Messenger mService = null;
-    private LineGraphSeries<DataPoint> series;
-
+    //private LineGraphSeries<DataPoint> series;
+    private CanvasView customCanvas;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -67,6 +67,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         // graph (debugging)
        // updateGraph();
+
+        customCanvas = (CanvasView) findViewById(R.id.signature_canvas);
+
     }
 
     class MyPagesAdapter extends PagerAdapter
@@ -294,5 +297,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         });
         graph.addSeries(series);
     }*/
+    public void clearCanvas(View v) {
+        customCanvas.clearCanvas();
+    }
 
 }
