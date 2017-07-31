@@ -101,6 +101,11 @@ public class TheiaService extends Service implements
         googleApiClient.disconnect();
         sensors.unRegister();
         super.onDestroy();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -195,7 +200,7 @@ public class TheiaService extends Service implements
         tracking.addPosition(current);
         current_task = Task.EMPTY;
         sendMessage("2 / X:" + Double.toString(current.getX()) + " Y:" + Double.toString(current.getY()));
-        sendMessage("3 / Angle change:" + Double.toString(Math.toDegrees(current.getAngle())));
+        sendMessage("3 / Angle change:" + Double.toString(current.getAngle()));
         sleep(10);
         /*if(locationSamples >= Tagger.TAG_SAMPLE_SIZE) {
             tagger.setLocation(PL.average());
@@ -209,7 +214,7 @@ public class TheiaService extends Service implements
     {
         if(current != null) {
             sendMessage("2 / X:" + Double.toString(current.getX()) + " Y:" + Double.toString(current.getY()));
-            sendMessage("3 / Angle change:" + Double.toString(Math.toDegrees(current.getAngle())));
+            sendMessage("3 / Angle change:" + Double.toString(current.getAngle()));
             //tracking.addPosition(current);
             current_task = Task.EMPTY;
             sleep(10);
