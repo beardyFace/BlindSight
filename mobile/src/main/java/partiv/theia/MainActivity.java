@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private View pages[] = new View[2];
 
     Messenger mService = null;
-
+    private CanvasView customCanvas;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -60,8 +60,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         Vf = new VoiceFeedback(this);
         bindService(new Intent(this, TheiaService.class), connection, Context.BIND_AUTO_CREATE);
 
-        // graph (debugging)
-       // updateGraph();
+        customCanvas = (CanvasView) findViewById(R.id.signature_canvas);
+
     }
 
     class MyPagesAdapter extends PagerAdapter
@@ -277,17 +277,5 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
         }
     }
-
-    /*private void updateGraph(){
-        GraphView graph = (GraphView) findViewById(R.id.graph);
-        LineGraphSeries<DataPoint> series = new LineGraphSeries<>(new DataPoint[] {
-                new DataPoint(0, 1),
-                new DataPoint(1, 5),
-                new DataPoint(2, 3),
-                new DataPoint(3, 2),
-                new DataPoint(4, 6)
-        });
-        graph.addSeries(series);
-    }*/
 
 }
