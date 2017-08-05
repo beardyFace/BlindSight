@@ -11,7 +11,8 @@ import java.util.Collections;
         SAVE(2, "save", "save location"),
         RETURN(3, "return"),
         TRACK(4),
-        RESET(5, "reset");
+        GUIDE(5),
+        RESET(6, "reset");
 
 
     private final ArrayList<String> task_names = new ArrayList<String>();

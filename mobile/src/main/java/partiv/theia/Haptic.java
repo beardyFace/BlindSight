@@ -16,9 +16,9 @@ public class Haptic {
         v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     }
 
-    public void vibrate()
+    public void vibrate(int time)
     {
-        v.vibrate(2000);
+        v.vibrate(time);
     }
 
 

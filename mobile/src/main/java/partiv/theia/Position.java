@@ -1,34 +1,29 @@
 package partiv.theia;
 
+import android.location.Location;
+
 public class Position {
 
+    private Location location;
     private double angle;
-    private double x;
-    private double y;
 
-    Position(double x, double y, double angle)
+    Position(Location location, double angle)
     {
-        this.x = x;
-        this.y = y;
+        this.location = location;
         this.angle = angle;
     }
 
-    public void setPosition(double x, double y, double angle)
+    public void setPosition(Location location, double angle)
     {
-        this.x = x;
-        this.y = y;
+        this.location = location;
         this.angle = angle;
     }
 
-    public double getX()
+    public Location getLocation()
     {
-        return this.x;
+        return this.location;
     }
 
-    public double getY()
-    {
-        return this.y;
-    }
 
     public double getAngle()
     {

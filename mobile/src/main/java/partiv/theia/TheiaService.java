@@ -2,6 +2,7 @@ package partiv.theia;
 
 import android.Manifest;
 import android.app.Service;
+import android.hardware.GeomagneticField;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
@@ -32,6 +33,8 @@ public class TheiaService extends Service implements
     private Location current_location;
     private Tagger tagger;
     private Haptic haptic;
+    private Pathing pathing;
+    private VoiceFeedback vf;
     private Tracking tracking;
     private Sensors sensors;
     private KalmanFilter KF;
@@ -49,16 +52,17 @@ public class TheiaService extends Service implements
                 }
                 else
                 {
+                    if(tagger.status())
+                    {
+                        current_task = Task.TRACK;
+                    }
                     synchronized (lockObj) {
                         try{
                             lockObj.wait();
                         } catch(InterruptedException e){
                             e.printStackTrace();
                         }
-                        if(current_task == Task.EMPTY)
-                        {
-                            current_task = Task.TRACK;
-                        }
+                        //locationSamples = 0;
                     }
                 }
             }
@@ -91,6 +95,7 @@ public class TheiaService extends Service implements
         tagger = new Tagger();
         PL = new ProcessLocation();
         KF = new KalmanFilter(1);
+        vf = new VoiceFeedback(this);
         sensors = new Sensors(this, lockObj);
         haptic = new Haptic(this);
         thread.start();
@@ -117,7 +122,7 @@ public class TheiaService extends Service implements
         {
             PL.addLocation(location);
         }
-        locationSamples++;
+        //locationSamples++;
         Log.d("Lattitude", Double.toString(location.getLatitude()));
         Log.d("Longditude", Double.toString(location.getLongitude()));
         Log.d("Accuracy", Float.toString(location.getAccuracy()));
@@ -180,6 +185,9 @@ public class TheiaService extends Service implements
             case TRACK:
                 track();
                 break;
+            case GUIDE:
+                guide();
+                break;
             case RESET:
                 break;
             case EMPTY:
@@ -194,29 +202,40 @@ public class TheiaService extends Service implements
     {
         if(tracking == null) {
             tracking = new Tracking(sensors);
-        }
+        }/*
         current = new Position(0.0, 0.0, sensors.getAngle());
         sensors.setPosition(current);
         tracking.addPosition(current);
         current_task = Task.EMPTY;
         sendMessage("2 / X:" + Double.toString(current.getX()) + " Y:" + Double.toString(current.getY()));
         sendMessage("3 / Angle change:" + Double.toString(current.getAngle()));
-        sleep(10);
-        /*if(locationSamples >= Tagger.TAG_SAMPLE_SIZE) {
-            tagger.setLocation(PL.average());
+        sleep(10);*/
+        //if(locationSamples >= Tagger.TAG_SAMPLE_SIZE) {
+        if (current_location != null) {
+            tagger.setLocation(current_location/*PL.average()*/);
             current_task = Task.EMPTY;
             debugging("1", tagger.getLocation());
             PL.clear();
-        }*/
+            sleep(10);
+        }
+       //}
     }
 
     private void track()
     {
-        if(current != null) {
+        /*if(current != null) {
             sendMessage("2 / X:" + Double.toString(current.getX()) + " Y:" + Double.toString(current.getY()));
             sendMessage("3 / Angle change:" + Double.toString(current.getAngle()));
             //tracking.addPosition(current);
             current_task = Task.EMPTY;
+            sleep(10);
+        }*/
+        if(current_location != null) {
+            tracking.addPosition(new Position(current_location, sensors.getAngle()));
+            current_task = Task.EMPTY;
+        }
+        else
+        {
             sleep(10);
         }
     }
@@ -241,16 +260,72 @@ public class TheiaService extends Service implements
             }
             sleep(10);
         }*/
-        /*if(locationSamples >= 5)
-        {
-            if (tagger.getLocation() != null && current_location != null) {
-                float distanceInMeters = PL.average().distanceTo(tagger.getLocation());
-                debugging("3", PL.average());
+        //if(locationSamples >= 5)
+        //{
+            /*if (tagger.getLocation() != null && current_location != null) {
+                float distanceInMeters = current_location.distanceTo(tagger.getLocation());
+                debugging("3", current_location);
                 sendMessage("2 / " + Float.toString(distanceInMeters));
                 current_task = Task.EMPTY;
                 PL.clear();
+                sleep(10);
+            }*/
+
+        if(pathing == null && tracking.getSize() > 0)
+        {
+            pathing = new Pathing(tracking, new Position(current_location, sensors.getAngle()));
+            current_task = Task.GUIDE;
+            sleep(10);
+        }
+        else
+        {
+            vf.speak("No path found");
+        }
+       // }
+    }
+
+    private void guide()
+    {
+        Location current_loc = current_location;//pathing.getCurrent().getLocation();
+        Location target_loc = pathing.getTarget().getLocation();
+
+        GeomagneticField geoField = new GeomagneticField(
+                (float) current_loc.getLatitude(),
+                (float) current_loc.getLongitude(),
+                (float) current_loc.getAltitude(),
+                System.currentTimeMillis());
+        double delta = Math.abs((sensors.getAngle() + geoField.getDeclination()) - current_loc.bearingTo(target_loc));
+
+        Log.d("Angle", Double.toString(sensors.getAngle()));
+        Log.d("Bearing", Double.toString(current_loc.bearingTo(target_loc)));
+        Log.d("Delta", Double.toString(delta));
+        if(delta < 15)
+        {
+            if(current_loc.distanceTo(target_loc) > 8)
+            {
+                vf.speak("Keep walking");
+                sleep(2000);
             }
-        }*/
+            else
+            {
+                if(!pathing.next())
+                {
+                    vf.speak("Arrived at destination");
+                    tagger.setStatus(false);
+                    current_task = Task.EMPTY;
+                }
+            }
+        }
+        else if(delta >= 15 && delta <= 180)
+        {
+            vf.speak("Turn right");
+            sleep(2000);
+        }
+        else
+        {
+            vf.speak("Turn left");
+            sleep(2000);
+        }
     }
 
     private void debugging(String numDebug, Location location){
@@ -261,6 +336,8 @@ public class TheiaService extends Service implements
         geoLoc += Double.toString(location.getLatitude());
         geoLoc += "\nLon: ";
         geoLoc += Double.toString(location.getLongitude());
+        geoLoc += "\nAcc: ";
+        geoLoc += Double.toString(location.getAccuracy());
 
         sendMessage(numDebug + " / " + geoLoc);
     }

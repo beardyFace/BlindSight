@@ -67,14 +67,15 @@ public class Sensors implements SensorEventListener
             if (event.values[0] == 1.0f)
             {
                 steps++;
-                updatePosition();
-                /*if(steps % 5 == 0)
-                {*/
+                //updatePosition();
+                if(steps % 5 == 0)
+                {
+                    steps = 0;
                     synchronized (lockObj)
                     {
                         lockObj.notify();
                     }
-                //}
+                }
             }
         }
 
@@ -84,7 +85,7 @@ public class Sensors implements SensorEventListener
         {
             SensorManager.getOrientation(rotationMatrix, orientation);
             azimuth = (float) Math.toDegrees(orientation[0]);
-            azimuth = (azimuth + 360) % 360;
+            //azimuth = (azimuth + 360) % 360;
             pitch = orientation[1] + Math.PI;
             roll = orientation[2] + Math.PI;
             //Log.d("Orientation", Double.toString(azimuth) + " " + Double.toString(Math.toDegrees(pitch)) + " " + Double.toString(Math.toDegrees(roll)));
@@ -121,13 +122,13 @@ public class Sensors implements SensorEventListener
 
     private void updatePosition()
     {
-        if(position != null) {
+        /*if(position != null) {
             double x, y, angle;
             x = position.getX() + STEP_SIZE * Math.sin(Math.toRadians(azimuth));
             y = position.getY() + STEP_SIZE * Math.cos(Math.toRadians(azimuth));
             angle = Math.abs(position.getAngle() - azimuth);
             position.setPosition(x, y, angle);
-        }
+        }*/
     }
 
     public double getDistance()
