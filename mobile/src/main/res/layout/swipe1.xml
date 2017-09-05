@@ -92,7 +92,7 @@
         android:layout_column="0" />
     <Button
         android:id="@+id/button8"
-        android:text="Voice"
+        android:text="Current mode: Outdoor"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="10dp"

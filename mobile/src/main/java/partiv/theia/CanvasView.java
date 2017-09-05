@@ -14,6 +14,7 @@ public class CanvasView extends View {
 
     public int width;
     public int height;
+    private boolean outDoor = true;
     private Bitmap mBitmap;
     private Canvas mCanvas;
     private Path mPath;
@@ -54,6 +55,11 @@ public class CanvasView extends View {
         canvas.drawText("Azimuth: " + Double.toString(azimuth) + " degrees", 10, 150, mPaint);
     }
 
+    public void setMode(boolean outDoor)
+    {
+        this.outDoor = outDoor;
+    }
+
     public void drawTag(double azimuth)
     {
         mPath.reset();
@@ -76,8 +82,8 @@ public class CanvasView extends View {
     {
         this.bearing = (bearing + 360) % 360;
         this.azimuth = (azimuth + 360 + offset) % 360;
-        float dx = (float) Math.sin(Math.toRadians(bearing)) * distance;
-        float dy = (float) Math.cos(Math.toRadians(bearing)) * distance;
+        float dx = (float) Math.sin(Math.toRadians(azimuth)) * distance;
+        float dy = (float) Math.cos(Math.toRadians(azimuth)) * distance;
 
         dx = tagX + (dx * 50);
         dy = tagY + (dy * 50);
@@ -89,8 +95,8 @@ public class CanvasView extends View {
     {
         this.bearing = (bearing + 360) % 360;
         this.azimuth = (azimuth + 360 + offset) % 360;
-        float dx = (float) Math.sin(Math.toRadians(bearing)) * distance;
-        float dy = (float) Math.cos(Math.toRadians(bearing)) * distance;
+        float dx = (float) Math.sin(Math.toRadians(azimuth)) * distance;
+        float dy = (float) Math.cos(Math.toRadians(azimuth)) * distance;
 
         currX += 50*dx;
         currY += 50*dy;

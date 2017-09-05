@@ -12,7 +12,9 @@ import java.util.Collections;
         RETURN(3, "return"),
         TRACK(4),
         GUIDE(5),
-        RESET(6, "reset");
+        OUTDOOR(6),
+        INDOOR(7),
+        RESET(8, "reset");
 
 
     private final ArrayList<String> task_names = new ArrayList<String>();

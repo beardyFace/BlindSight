@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private int i = 0;
     private boolean start = false;
     private boolean isBound = false;
+    private boolean outDoor = true;
     private VoiceFeedback Vf;
     private int current_id;
     LayoutInflater inflater;
@@ -166,7 +167,19 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         displaySpeechRecognizer();
                         break;
                     case R.id.button8:
-                        displaySpeechRecognizer();
+                        if(outDoor) {
+                            sendTask(Task.INDOOR);
+                            buttons[7].setText("Current mode: Indoor");
+                            outDoor = false;
+                        }
+                        else
+                        {
+                            sendTask(Task.OUTDOOR);
+                            buttons[7].setText("Current mode: Outdoor");
+                            outDoor = true;
+                        }
+                        customCanvas.setMode(outDoor);
+
                     default:
                         break;
                 }
