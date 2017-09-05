@@ -50,14 +50,6 @@ public class KalmanFilter {
         return location;
     }
 
-    /// <summary>
-    /// Kalman filter processing for lattitude and longitude
-    /// </summary>
-    /// <param name="lat_measurement_degrees">new measurement of lattidude</param>
-    /// <param name="lng_measurement">new measurement of longitude</param>
-    /// <param name="accuracy">measurement of 1 standard deviation error in metres</param>
-    /// <param name="timeStamp_milliseconds">time of measurement</param>
-    /// <returns>new state</returns>
     public void process(Location location){
         double lat_measurement = location.getLatitude();
         double lng_measurement = location.getLongitude();

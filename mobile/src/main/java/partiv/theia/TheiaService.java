@@ -31,6 +31,7 @@ public class TheiaService extends Service implements
     private GoogleApiClient googleApiClient;
     private Task current_task = Task.EMPTY;
     private Location current_location;
+    private Location prev_location;
     private Tagger tagger;
     private Haptic haptic;
     private Pathing pathing;
@@ -38,7 +39,7 @@ public class TheiaService extends Service implements
     private Tracking tracking;
     private Sensors sensors;
     private KalmanFilter KF;
-    private ProcessLocation PL;
+    private double azimuth;
     private boolean newTask = true;
 
     private volatile boolean running = true;
@@ -93,7 +94,6 @@ public class TheiaService extends Service implements
                 .build();
         googleApiClient.connect();
         tagger = new Tagger();
-        PL = new ProcessLocation();
         KF = new KalmanFilter(1);
         vf = new VoiceFeedback(this);
         sensors = new Sensors(this, lockObj);
@@ -116,16 +116,17 @@ public class TheiaService extends Service implements
     @Override
     public void onLocationChanged(Location location)
     {
-        KF.process(location);
-        current_location = KF.returnLocation();
-        if(current_task == Task.TAG || current_task == Task.RETURN)
-        {
-            PL.addLocation(location);
+        if(location.getAccuracy() <= 15) {
+            KF.process(location);
+            current_location = KF.returnLocation();
+
+
+            //locationSamples++;
+            Log.d("Lattitude", Double.toString(location.getLatitude()));
+            Log.d("Longditude", Double.toString(location.getLongitude()));
+            Log.d("Accuracy", Float.toString(location.getAccuracy()));
+            Log.d("Orientation", Double.toString(azimuth));
         }
-        //locationSamples++;
-        Log.d("Lattitude", Double.toString(location.getLatitude()));
-        Log.d("Longditude", Double.toString(location.getLongitude()));
-        Log.d("Accuracy", Float.toString(location.getAccuracy()));
     }
 
     @Override
@@ -214,11 +215,12 @@ public class TheiaService extends Service implements
         if (current_location != null) {
             tagger.setLocation(current_location/*PL.average()*/);
             current_task = Task.EMPTY;
+            prev_location = null;
             debugging("1", tagger.getLocation());
-            PL.clear();
+            sendMessage("T," + Double.toString(azimuth));
             sleep(10);
         }
-       //}
+        //}
     }
 
     private void track()
@@ -232,6 +234,18 @@ public class TheiaService extends Service implements
         }*/
         if(current_location != null) {
             tracking.addPosition(new Position(current_location, sensors.getAngle()));
+            azimuth = sensors.getAngle();
+            GeomagneticField geoField = new GeomagneticField(
+                    (float) current_location.getLatitude(),
+                    (float) current_location.getLongitude(),
+                    (float) current_location.getAltitude(),
+                    System.currentTimeMillis());
+            azimuth += geoField.getDeclination();
+
+            if (prev_location != null) {
+                sendCoordinates("L", current_location.distanceTo(prev_location), current_location.bearingTo(prev_location), azimuth);
+            }
+            prev_location = current_location;
             current_task = Task.EMPTY;
         }
         else
@@ -271,17 +285,34 @@ public class TheiaService extends Service implements
                 sleep(10);
             }*/
 
-        if(pathing == null && tracking.getSize() > 0)
+        /*if(pathing == null && tracking.getSize() > 0)
         {
             pathing = new Pathing(tracking, new Position(current_location, sensors.getAngle()));
+            current_task = Task.GUIDE;
+            sendMessage("R" + Float.toString(current_location.distanceTo(tagger.getLocation())));
+            sleep(10);
+        }
+        else
+        {
+            vf.speak("No path found");
+            current_task = Task.EMPTY;
+        }*/
+        if(pathing == null && tracking.getSize() > 0) {
+            sendCoordinates("R", current_location.distanceTo(tagger.getLocation()), current_location.bearingTo(tagger.getLocation()), azimuth);
             current_task = Task.GUIDE;
             sleep(10);
         }
         else
         {
             vf.speak("No path found");
+            current_task = Task.EMPTY;
         }
-       // }
+        // }
+    }
+
+    private void sendCoordinates(String type, float distance, float bearing, double azimuth)
+    {
+        sendMessage(type + "," + Float.toString(distance) + "," + Float.toString(bearing) + "," + Double.toString(azimuth));
     }
 
     private void guide()
@@ -289,21 +320,15 @@ public class TheiaService extends Service implements
         Location current_loc = current_location;//pathing.getCurrent().getLocation();
         Location target_loc = pathing.getTarget().getLocation();
 
-        GeomagneticField geoField = new GeomagneticField(
-                (float) current_loc.getLatitude(),
-                (float) current_loc.getLongitude(),
-                (float) current_loc.getAltitude(),
-                System.currentTimeMillis());
-        double delta = Math.abs((sensors.getAngle() + geoField.getDeclination()) - current_loc.bearingTo(target_loc));
-
-        Log.d("Angle", Double.toString(sensors.getAngle()));
+        double bearing = current_loc.bearingTo(target_loc);
+        double direction = Math.abs(azimuth - bearing);
         Log.d("Bearing", Double.toString(current_loc.bearingTo(target_loc)));
-        Log.d("Delta", Double.toString(delta));
-        if(delta < 15)
+        Log.d("Direction", Double.toString(direction));
+        if(direction < 15)
         {
             if(current_loc.distanceTo(target_loc) > 8)
             {
-                vf.speak("Keep walking");
+                vf.speak("walk straight");
                 sleep(2000);
             }
             else
@@ -316,14 +341,14 @@ public class TheiaService extends Service implements
                 }
             }
         }
-        else if(delta >= 15 && delta <= 180)
+        else if(direction >= 15 && direction <= 180)
         {
-            vf.speak("Turn right");
+            vf.speak("Walk towards the right");
             sleep(2000);
         }
         else
         {
-            vf.speak("Turn left");
+            vf.speak("Walk towards the left");
             sleep(2000);
         }
     }

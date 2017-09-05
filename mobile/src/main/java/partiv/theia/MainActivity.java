@@ -25,6 +25,8 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnTouchListener
 {
@@ -59,9 +61,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         initTimer();
         Vf = new VoiceFeedback(this);
         bindService(new Intent(this, TheiaService.class), connection, Context.BIND_AUTO_CREATE);
-
-        customCanvas = (CanvasView) findViewById(R.id.signature_canvas);
-
+        customCanvas = pages[1].findViewById(R.id.signature_canvas);
     }
 
     class MyPagesAdapter extends PagerAdapter
@@ -260,6 +260,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             String recdMessage = msg.obj.toString(); //msg received from service
+            List<String> data = Arrays.asList(recdMessage.split(","));
             if(recdMessage.charAt(0) == '1') {
                 buttons[6].setText(recdMessage);
             }
@@ -270,6 +271,19 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             else if(recdMessage.charAt(0) == '4')
             {
                 Vf.speak("Arrived at destination");
+            }
+            else if(recdMessage.charAt(0) == 'T')
+            {
+                customCanvas.drawTag(Double.valueOf(data.get(1)));
+            }
+            else if(recdMessage.charAt(0) == 'R')
+            {
+                customCanvas.drawRet(Float.valueOf(data.get(1)), Float.valueOf(data.get(2)), Double.valueOf(data.get(3)));
+            }
+            else if(recdMessage.charAt(0) == 'L')
+            {
+                customCanvas.updatesLocation(Float.valueOf(data.get(1)), Float.valueOf(data.get(2)), Double.valueOf(data.get(3)));
+                customCanvas.invalidate();
             }
             else
             {

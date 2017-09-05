@@ -68,7 +68,7 @@ public class Sensors implements SensorEventListener
             {
                 steps++;
                 //updatePosition();
-                if(steps % 5 == 0)
+                if(steps % 3 == 0)
                 {
                     steps = 0;
                     synchronized (lockObj)
