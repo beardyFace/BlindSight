@@ -315,7 +315,7 @@ public class TheiaService extends Service implements
             startTime = System.nanoTime();
         }
 
-        if(startTime - System.nanoTime() >= 3000000000L)
+        if(System.nanoTime() - startTime >= 3000000000L)
         {
             timeOut = true;
             startTime = 0;
