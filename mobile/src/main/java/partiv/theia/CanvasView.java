@@ -104,6 +104,18 @@ public class CanvasView extends View {
         distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2)) / 10;
         invalidate();
     }
+
+    public void updateIndoor(float x, float y, double azimuth)
+    {
+        this.bearing = (bearing + 360) % 360;
+        this.azimuth = (azimuth + 360 + offset) % 360;
+
+        currX = tagX + 10 * x;
+        currY = tagY + 10 * y;
+
+        distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2)) / 10;
+        invalidate();
+    }
     /*private void drawArrowHead(Canvas canvas, Point tip, Point tail)
     {
         double dy = tip.y - tail.y;

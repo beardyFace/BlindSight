@@ -285,6 +285,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     customCanvas.updatesLocation(Float.valueOf(data.get(1)), Float.valueOf(data.get(2)), Double.valueOf(data.get(3)));
                     customCanvas.invalidate();
                     break;
+                case "UPDATEI":
+                    customCanvas.updateIndoor(Float.valueOf(data.get(1)), Float.valueOf(data.get(2)), Double.valueOf(data.get(3)));
+                    customCanvas.invalidate();
             }
         }
     }

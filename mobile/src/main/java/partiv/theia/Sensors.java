@@ -2,6 +2,7 @@ package partiv.theia;
 
 
 import android.content.Context;
+import android.graphics.PointF;
 import android.hardware.GeomagneticField;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -20,7 +21,7 @@ public class Sensors implements SensorEventListener
     //private float[] magnetic = new float[3];
     //private float[] linearAcc = new float[3];
 
-    private static final double STEP_SIZE = 0.76;
+    public static final double STEP_SIZE = 0.76;
     private double azimuth, pitch, roll;
     private Position position;
     private Object lockObj;
@@ -67,8 +68,8 @@ public class Sensors implements SensorEventListener
             if (event.values[0] == 1.0f)
             {
                 steps++;
-                //updatePosition();
-                if(steps % 1 == 0)
+                updatePosition();
+                if(steps % 3 == 0)
                 {
                     steps = 0;
                     synchronized (lockObj)
@@ -122,18 +123,20 @@ public class Sensors implements SensorEventListener
 
     private void updatePosition()
     {
-        /*if(position != null) {
-            double x, y, angle;
-            x = position.getX() + STEP_SIZE * Math.sin(Math.toRadians(azimuth));
-            y = position.getY() + STEP_SIZE * Math.cos(Math.toRadians(azimuth));
+        if(position != null) {
+            float x, y;
+            double angle;
+            x = (float) (position.getPosition().x + STEP_SIZE * Math.sin(Math.toRadians(azimuth)));
+            y = (float) (position.getPosition().y + STEP_SIZE * Math.cos(Math.toRadians(azimuth)));
+            PointF p = new PointF(x, y);
             angle = Math.abs(position.getAngle() - azimuth);
-            position.setPosition(x, y, angle);
-        }*/
+            position.setPosition(p, angle);
+        }
     }
 
     public double getDistance()
     {
-        return STEP_SIZE * (steps * 0.9);
+        return STEP_SIZE * (steps * 0.76);
     }
 
     @Override

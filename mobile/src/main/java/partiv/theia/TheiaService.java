@@ -2,6 +2,7 @@ package partiv.theia;
 
 import android.Manifest;
 import android.app.Service;
+import android.graphics.PointF;
 import android.hardware.GeomagneticField;
 import android.os.Handler;
 import android.os.Message;
@@ -30,6 +31,7 @@ public class TheiaService extends Service implements
 {
     private GoogleApiClient googleApiClient;
     private Task current_task = Task.EMPTY;
+    private Position current_position;
     private Location current_location;
     private Location prev_location;
     private Tagger tagger;
@@ -55,10 +57,6 @@ public class TheiaService extends Service implements
                 }
                 else
                 {
-                    /*if(tagger.status())
-                    {
-                        current_task = Task.TRACK;
-                    }*/
                     synchronized (lockObj) {
                         try{
                             lockObj.wait();
@@ -66,6 +64,10 @@ public class TheiaService extends Service implements
                             e.printStackTrace();
                         }
                         //locationSamples = 0;
+                    }
+                    if(tagger.status() && !outDoor)
+                    {
+                        current_task = Task.TRACK;
                     }
                 }
             }
@@ -254,18 +256,18 @@ public class TheiaService extends Service implements
             current_task = Task.EMPTY;
             tagger.setStatus(true);
             sendMessage("TAG," + Double.toString(azimuth));
+            current_position = new Position(new PointF(0, 0), azimuth);
+            sensors.setPosition(current_position);
         }
         //}
     }
 
     private void track() {
-        float distance;
-        distance = (float) 0.76;
         if (outDoor)
         {
             if (current_location != null) {
                 tracking.addPosition(new Position(current_location, sensors.getAngle()));
-                vf.speak("TRACK");
+                vf.speak("Track");
                 current_task = Task.EMPTY;
             } else {
                 sleep(10);
@@ -274,8 +276,10 @@ public class TheiaService extends Service implements
         else
         {
             azimuth = sensors.getAngle();
+            tracking.addPosition(current_position);
+            vf.speak("Track");
+            sendCoordinates("UPDATEI", current_position.getPosition().x, current_position.getPosition().y, azimuth);
             current_task = Task.EMPTY;
-            sendCoordinates("UPDATE", distance, 0, azimuth);
             sleep(10);
         }
     }
@@ -285,7 +289,7 @@ public class TheiaService extends Service implements
             sendCoordinates("RETURN", current_location.distanceTo(tagger.getLocation()), current_location.bearingTo(tagger.getLocation()), azimuth);
             pathing = new Pathing(tracking, new Position(current_location, sensors.getAngle()));
             current_task = Task.GUIDE;
-            vf.speak("TONY");
+            vf.speak("Tony");
             tagger.setStatus(false);
             sleep(10);
         }
@@ -302,8 +306,21 @@ public class TheiaService extends Service implements
         sendMessage(type + "," + Float.toString(distance) + "," + Float.toString(bearing) + "," + Double.toString(azimuth));
     }
 
+    private long startTime = 0;
     private void guide()
     {
+        boolean timeOut = false;
+        if(startTime == 0)
+        {
+            startTime = System.nanoTime();
+        }
+
+        if(startTime - System.nanoTime() >= 3000000000L)
+        {
+            timeOut = true;
+            startTime = 0;
+        }
+
         Location current_loc = current_location;//pathing.getCurrent().getLocation();
         Location target_loc = pathing.getTarget().getLocation();
 
@@ -314,10 +331,9 @@ public class TheiaService extends Service implements
         Log.d("Direction", Double.toString(direction));
         if((direction >= 340 && direction <= 359) || (direction >= 0 && direction < 20))
         {
-            if(current_loc.distanceTo(target_loc) > 8)
+            if(current_loc.distanceTo(target_loc) > 8 && timeOut)
             {
                 vf.speak("walk straight");
-                sleep(3000);
             }
             else
             {
@@ -331,8 +347,9 @@ public class TheiaService extends Service implements
         }
         else
         {
-            vf.speak(Integer.toString((int) direction) + " degrees");
-            sleep(3000);
+            if(timeOut) {
+                vf.speak(Integer.toString((int) direction) + " degrees");
+            }
         }
     }
 
