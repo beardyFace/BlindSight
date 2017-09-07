@@ -50,9 +50,10 @@ public class CanvasView extends View {
 
         mPaint.setColor(Color.BLACK);
         mPaint.setTextSize(35);
+        canvas.drawText("Outdoor: " + Boolean.toString(outDoor), 10, 150, mPaint);
         canvas.drawText("DistanceFromTag: " + Float.toString(distanceFromTag) + " m", 10, 50, mPaint);
         canvas.drawText("ChangeInBearing: " + Float.toString(bearing) + " degrees", 10, 100, mPaint);
-        canvas.drawText("Azimuth: " + Double.toString(azimuth) + " degrees", 10, 150, mPaint);
+        canvas.drawText("Azimuth: " + Double.toString(azimuth) + " degrees", 10, 200, mPaint);
     }
 
     public void setMode(boolean outDoor)

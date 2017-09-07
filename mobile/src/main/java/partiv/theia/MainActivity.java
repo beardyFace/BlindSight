@@ -274,33 +274,17 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             super.handleMessage(msg);
             String recdMessage = msg.obj.toString(); //msg received from service
             List<String> data = Arrays.asList(recdMessage.split(","));
-            if(recdMessage.charAt(0) == '1') {
-                buttons[6].setText(recdMessage);
-            }
-            else if(recdMessage.charAt(0) == '3')
-            {
-                buttons[5].setText(recdMessage);
-            }
-            else if(recdMessage.charAt(0) == '4')
-            {
-                Vf.speak("Arrived at destination");
-            }
-            else if(recdMessage.charAt(0) == 'T')
-            {
-                customCanvas.drawTag(Double.valueOf(data.get(1)));
-            }
-            else if(recdMessage.charAt(0) == 'R')
-            {
-                customCanvas.drawRet(Float.valueOf(data.get(1)), Float.valueOf(data.get(2)), Double.valueOf(data.get(3)));
-            }
-            else if(recdMessage.charAt(0) == 'L')
-            {
-                customCanvas.updatesLocation(Float.valueOf(data.get(1)), Float.valueOf(data.get(2)), Double.valueOf(data.get(3)));
-                customCanvas.invalidate();
-            }
-            else
-            {
-                buttons[7].setText(recdMessage);
+            switch(data.get(0)) {
+                case "TAG":
+                    customCanvas.drawTag(Double.valueOf(data.get(1)));
+                    break;
+                case "RETURN":
+                    customCanvas.drawRet(Float.valueOf(data.get(1)), Float.valueOf(data.get(2)), Double.valueOf(data.get(3)));
+                    break;
+                case "UPDATE":
+                    customCanvas.updatesLocation(Float.valueOf(data.get(1)), Float.valueOf(data.get(2)), Double.valueOf(data.get(3)));
+                    customCanvas.invalidate();
+                    break;
             }
         }
     }
