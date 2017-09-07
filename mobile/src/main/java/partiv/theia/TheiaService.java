@@ -132,13 +132,17 @@ public class TheiaService extends Service implements
                         System.currentTimeMillis());
                 azimuth += geoField.getDeclination();
 
-                if (prev_location != null && tagger.status())
+                if (prev_location != null)
                 {
-                    distance += prev_location.distanceTo(current_location);
-                    if(distance >= 3)
-                    {
-                        current_task = Task.TRACK;
-                        distance = 0;
+                    if(tagger.status()) {
+                        distance += prev_location.distanceTo(current_location);
+                        if (distance >= 3) {
+                            current_task = Task.TRACK;
+                            distance = 0;
+                            synchronized (lockObj) {
+                                lockObj.notify();
+                            }
+                        }
                     }
                     sendCoordinates("UPDATE", prev_location.distanceTo(current_location), prev_location.bearingTo(current_location), azimuth);
                 }
@@ -261,6 +265,7 @@ public class TheiaService extends Service implements
         {
             if (current_location != null) {
                 tracking.addPosition(new Position(current_location, sensors.getAngle()));
+                vf.speak("TRACK");
                 current_task = Task.EMPTY;
             } else {
                 sleep(10);
@@ -280,6 +285,8 @@ public class TheiaService extends Service implements
             sendCoordinates("RETURN", current_location.distanceTo(tagger.getLocation()), current_location.bearingTo(tagger.getLocation()), azimuth);
             pathing = new Pathing(tracking, new Position(current_location, sensors.getAngle()));
             current_task = Task.GUIDE;
+            vf.speak("TONY");
+            tagger.setStatus(false);
             sleep(10);
         }
         else
@@ -305,12 +312,12 @@ public class TheiaService extends Service implements
         double direction = Math.abs(azimuth - bearing);
         Log.d("Bearing", Double.toString(current_loc.bearingTo(target_loc)));
         Log.d("Direction", Double.toString(direction));
-        if(direction < 15)
+        if((direction >= 340 && direction <= 359) || (direction >= 0 && direction < 20))
         {
             if(current_loc.distanceTo(target_loc) > 8)
             {
                 vf.speak("walk straight");
-                sleep(2000);
+                sleep(3000);
             }
             else
             {
@@ -322,15 +329,10 @@ public class TheiaService extends Service implements
                 }
             }
         }
-        else if(direction >= 15 && direction <= 180)
-        {
-            vf.speak("Walk towards the left");
-            sleep(2000);
-        }
         else
         {
-            vf.speak("Walk towards the right");
-            sleep(2000);
+            vf.speak(Integer.toString((int) direction) + " degrees");
+            sleep(3000);
         }
     }
 

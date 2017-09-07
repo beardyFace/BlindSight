@@ -83,26 +83,25 @@ public class CanvasView extends View {
     {
         this.bearing = (bearing + 360) % 360;
         this.azimuth = (azimuth + 360 + offset) % 360;
-        float dx = (float) Math.sin(Math.toRadians(azimuth)) * distance;
-        float dy = (float) Math.cos(Math.toRadians(azimuth)) * distance;
+        float dx = (float) Math.sin(Math.toRadians(this.azimuth)) * distance;
+        float dy = (float) Math.cos(Math.toRadians(this.azimuth)) * distance;
 
-        dx = tagX + (dx * 50);
-        dy = tagY + (dy * 50);
+        dx = tagX + (dx * 10);
+        dy = tagY + (dy * 10);
         mPath.addCircle(dx, dy, 15, Path.Direction.CW);
         invalidate();
     }
 
-    public void updatesLocation(float distance, float bearing, double azimuth)
-    {
+    public void updatesLocation(float distance, float bearing, double azimuth) {
         this.bearing = (bearing + 360) % 360;
         this.azimuth = (azimuth + 360 + offset) % 360;
-        float dx = (float) Math.sin(Math.toRadians(azimuth)) * distance;
-        float dy = (float) Math.cos(Math.toRadians(azimuth)) * distance;
+        float dx = (float) Math.sin(Math.toRadians(this.azimuth)) * distance;
+        float dy = (float) Math.cos(Math.toRadians(this.azimuth)) * distance;
 
-        currX += 50*dx;
-        currY += 50*dy;
+        currX += 10 * dx;
+        currY += 10 * dy;
 
-        distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2)) / 50;
+        distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2)) / 10;
         invalidate();
     }
     /*private void drawArrowHead(Canvas canvas, Point tip, Point tail)
