@@ -331,9 +331,12 @@ public class TheiaService extends Service implements
         Log.d("Direction", Double.toString(direction));
         if((direction >= 340 && direction <= 359) || (direction >= 0 && direction < 20))
         {
-            if(current_loc.distanceTo(target_loc) > 8 && timeOut)
+            if(current_loc.distanceTo(target_loc) > 8 )
             {
-                vf.speak("walk straight");
+                if(timeOut)
+                {
+                    vf.speak("walk straight");
+                }
             }
             else
             {
@@ -351,6 +354,7 @@ public class TheiaService extends Service implements
                 vf.speak(Integer.toString((int) direction) + " degrees");
             }
         }
+        sleep(10);
     }
 
     private void debugging(String numDebug, Location location){

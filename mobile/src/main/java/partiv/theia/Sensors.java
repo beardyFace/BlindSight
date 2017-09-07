@@ -126,8 +126,8 @@ public class Sensors implements SensorEventListener
         if(position != null) {
             float x, y;
             double angle;
-            x = (float) (position.getPosition().x + STEP_SIZE * Math.sin(Math.toRadians(azimuth)));
-            y = (float) (position.getPosition().y + STEP_SIZE * Math.cos(Math.toRadians(azimuth)));
+            x = (float) (position.getPosition().x + STEP_SIZE * Math.sin(Math.toRadians((azimuth + 360) % 360)));
+            y = (float) (position.getPosition().y + STEP_SIZE * Math.cos(Math.toRadians((azimuth + 360) % 360)));
             PointF p = new PointF(x, y);
             angle = Math.abs(position.getAngle() - azimuth);
             position.setPosition(p, angle);

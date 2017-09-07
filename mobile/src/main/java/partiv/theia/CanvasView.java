@@ -110,10 +110,10 @@ public class CanvasView extends View {
         this.bearing = (bearing + 360) % 360;
         this.azimuth = (azimuth + 360 + offset) % 360;
 
-        currX = tagX + 10 * x;
-        currY = tagY + 10 * y;
+        currX = tagX - (10 * x);
+        currY = tagY - (10 * y);
 
-        distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2)) / 10;
+        distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2));
         invalidate();
     }
     /*private void drawArrowHead(Canvas canvas, Point tip, Point tail)
