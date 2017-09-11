@@ -14,7 +14,9 @@ import java.util.Collections;
         GUIDE(5),
         OUTDOOR(6),
         INDOOR(7),
-        RESET(8, "reset");
+        RESET(8, "reset"),
+        RETURN2(9, "save return"),
+        HELP(10);
 
 
     private final ArrayList<String> task_names = new ArrayList<String>();

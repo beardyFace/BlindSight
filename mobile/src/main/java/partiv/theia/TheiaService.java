@@ -24,6 +24,8 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import java.util.ArrayList;
+
 public class TheiaService extends Service implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
@@ -45,6 +47,8 @@ public class TheiaService extends Service implements
     private double distance = 0;
     private boolean newTask = true;
     private boolean outDoor = true;
+    private ArrayList<Position> savedPath = new ArrayList<>();
+    private Position savedPosition;
 
     private volatile boolean running = true;
     private final Object lockObj = new Object();
@@ -209,10 +213,16 @@ public class TheiaService extends Service implements
                 tag();
                 break;
             case SAVE:
+                save();
                 break;
             case RETURN:
                 ret();
                 break;
+            case RETURN2:
+                saveRet();
+                break;
+            case HELP:
+                help();
             case TRACK:
                 track();
                 break;
@@ -237,6 +247,7 @@ public class TheiaService extends Service implements
 
     private Position current;
     private void tag() {
+        vf.speak("location is tagged");
         if (tracking == null) {
             tracking = new Tracking(sensors);
         }
@@ -262,6 +273,18 @@ public class TheiaService extends Service implements
         //}
     }
 
+    private void save(){
+        vf.speak("save location");
+    }
+
+    private void saveRet(){
+        vf.speak("return to saved location");
+    }
+
+    private void help(){
+        vf.speak("help message instructions");
+    }
+
     private void track() {
         if (outDoor)
         {
@@ -285,11 +308,12 @@ public class TheiaService extends Service implements
     }
 
     private void ret(){
+        vf.speak("attempting to return");
         if(pathing == null && tracking.getSize() > 0) {
             sendCoordinates("RETURN", current_location.distanceTo(tagger.getLocation()), current_location.bearingTo(tagger.getLocation()), azimuth);
             pathing = new Pathing(tracking, new Position(current_location, sensors.getAngle()));
             current_task = Task.GUIDE;
-            vf.speak("Tony");
+            vf.speak("returning to tagged location");
             tagger.setStatus(false);
             sleep(10);
         }

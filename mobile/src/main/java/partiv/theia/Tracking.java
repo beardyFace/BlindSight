@@ -29,7 +29,6 @@ public class Tracking {
         return tracks.get(index);
     }
 
-
-
+    public ArrayList<Position> getTrack(){if (tracks != null) {return tracks;} else{return null;}};
 
 }

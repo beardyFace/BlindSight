@@ -154,12 +154,13 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         sendTask(Task.SAVE);
                         break;
                     case R.id.button3:
+                        sendTask(Task.RETURN);
                         break;
                     case R.id.button4:
-                        sendTask(Task.RETURN);
+                        sendTask(Task.RETURN2);
                         break;
                     case R.id.button5:
-                        sendTask(Task.RETURN);
+                        sendTask(Task.HELP);
                         break;
                     case R.id.button6:
                         break;
