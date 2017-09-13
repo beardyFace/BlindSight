@@ -69,9 +69,10 @@ public class TheiaService extends Service implements
                         }
                         //locationSamples = 0;
                     }
-                    if(tagger.status() && !outDoor)
+                    if(tagger.status() && !outDoor && sensors.getTrack())
                     {
                         current_task = Task.TRACK;
+                        sensors.setTrack(false);
                     }
                 }
             }
@@ -196,7 +197,8 @@ public class TheiaService extends Service implements
         @Override
         public void handleMessage(Message msg) {
             replyMessanger = msg.replyTo;
-            if(current_task == Task.EMPTY || current_task == Task.TRACK) {
+            if(current_task == Task.EMPTY || current_task == Task.TRACK)
+            {
                 current_task = Task.getTask(msg.what);
                 newTask = true;
                 synchronized (lockObj) {
@@ -277,15 +279,20 @@ public class TheiaService extends Service implements
 
     private void save(){
         vf.speak("save location");
+        current_task = Task.EMPTY;
+        sleep(10);
     }
 
     private void saveRet(){
         vf.speak("return to saved location");
+        current_task = Task.EMPTY;
+        sleep(10);
     }
 
     private void help(){
         vf.speak("help message instructions");
-        current_task = current_task.EMPTY;
+        current_task = Task.EMPTY;
+        sleep(10);
     }
 
     private void track() {
