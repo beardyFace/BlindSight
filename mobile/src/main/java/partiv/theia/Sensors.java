@@ -3,18 +3,18 @@ package partiv.theia;
 
 import android.content.Context;
 import android.graphics.PointF;
-import android.hardware.GeomagneticField;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
 
-public class Sensors implements SensorEventListener
+public class Sensors implements SensorEventListener//, StepListener
 {
 
     private SensorManager mSensorManager;
     private final Context context;
+    private StepDetector simpleStepDetector;
     private int steps = 0;
     private boolean track = false;
     //private float[] gravity = new float[3];
@@ -33,11 +33,13 @@ public class Sensors implements SensorEventListener
         this.lockObj = lockObj;
         mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         //mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY), SensorManager.SENSOR_DELAY_NORMAL);
-        //mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_NORMAL);
+        //mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_FASTEST);
         //mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), SensorManager.SENSOR_DELAY_NORMAL);
         //mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
         mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR), SensorManager.SENSOR_DELAY_FASTEST);
-        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR), SensorManager.SENSOR_DELAY_NORMAL);
+        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR), SensorManager.SENSOR_DELAY_FASTEST);
+        /*simpleStepDetector = new StepDetector();
+        simpleStepDetector.registerListener(this);*/
     }
 
 
@@ -57,22 +59,14 @@ public class Sensors implements SensorEventListener
     }
     @Override
     public void onSensorChanged(SensorEvent event) {
-        /*if (event.sensor.getType() == Sensor.TYPE_GRAVITY){
-            for(int i = 0; i < 3; i++)
-                gravity[i] = event.values[i]; //lowPass(event.values.clone(), gravity);
-        }*/
         if(event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR)
         {
             SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values);
         }
-        /*else if(event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD){
-            for(int i = 0; i < 3; i++)
-                magnetic[i] = event.values[i];
-        }*/
-        /*else if(event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION)
+        /*else if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
         {
-            for(int i = 0; i < 3; i++)
-                linearAcc[i] = event.values[i];
+            simpleStepDetector.updateAccel(
+                    event.timestamp, event.values[0], event.values[1], event.values[2]);
         }*/
         else if(event.sensor.getType() == Sensor.TYPE_STEP_DETECTOR)
         {
@@ -144,5 +138,20 @@ public class Sensors implements SensorEventListener
     public void onAccuracyChanged(Sensor sensor, int i) {
 
     }
+
+    /*@Override
+    public void step(long timeNs) {
+        steps++;
+        updatePosition();
+        if(steps % 3 == 0)
+        {
+            track = true;
+            steps = 0;
+            synchronized (lockObj)
+            {
+                lockObj.notify();
+            }
+        }
+    }*/
 
 }
