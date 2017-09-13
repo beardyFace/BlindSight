@@ -251,7 +251,6 @@ public class TheiaService extends Service implements
 
     private Position current;
     private void tag() {
-        vf.speak("location is tagged");
         if (tracking == null) {
             tracking = new Tracking(sensors);
         }
@@ -259,22 +258,25 @@ public class TheiaService extends Service implements
         if (outDoor)
         {
             if (current_location != null) {
+                vf.speak("Location is tagged");
                 tagger.setLocation(current_location/*PL.average()*/);
-                current_task = Task.EMPTY;
                 prev_location = null;
                 sendMessage("TAG," + Double.toString(azimuth));
                 sleep(10);
+            } else{
+                vf.speak("Failed to tag location, please retry");
             }
         }
         else
         {
-            current_task = Task.EMPTY;
+            vf.speak("Location is tagged");
             tagger.setStatus(true);
             sendMessage("TAG," + Double.toString(azimuth));
             current_position = new Position(new PointF(0, 0), azimuth);
             sensors.setPosition(current_position);
         }
         //}
+        current_task = Task.EMPTY;
     }
 
     private void save(){
@@ -290,7 +292,7 @@ public class TheiaService extends Service implements
     }
 
     private void help(){
-        vf.speak("help message instructions");
+        vf.speak("The screen is split into 8 buttons with 4 columns and 2 rows. The top left corner is button 1 and the bottom right is button 8. From 1 through to 8 the buttons are as follows. 1 is to tag a location. 2 is to save a location. 3 is to return to a tagged location. 4 is to return to a saved location. 5 is the help button which can be pressed to hear this message. 6 is the reset button which resets tagged locations but not saved locations. 7 is a voice button which can be used to call out the names of the buttons instead of pressing them. 8 is the button to change from outdoor to indoor mode and vice versa. Tap a button to hear what the name of the button is and what it does. Hold down that button for 3 seconds and the button will be pressed.");
         current_task = Task.EMPTY;
         sleep(10);
     }
@@ -319,20 +321,22 @@ public class TheiaService extends Service implements
 
     private void ret(){
         vf.speak("attempting to return");
-        if(pathing == null && tracking.getSize() > 0) {
-            sendCoordinates("RETURN", current_location.distanceTo(tagger.getLocation()), current_location.bearingTo(tagger.getLocation()), azimuth);
-            pathing = new Pathing(tracking, new Position(current_location, sensors.getAngle()));
-            current_task = Task.GUIDE;
-            vf.speak("returning to tagged location");
-            tagger.setStatus(false);
-            sleep(10);
-        }
-        else
-        {
-            vf.speak("No path found");
+        if (tagger.status()) {
+            if (pathing == null && tracking.getSize() > 0) {
+                sendCoordinates("RETURN", current_location.distanceTo(tagger.getLocation()), current_location.bearingTo(tagger.getLocation()), azimuth);
+                pathing = new Pathing(tracking, new Position(current_location, sensors.getAngle()));
+                current_task = Task.GUIDE;
+                vf.speak("returning to tagged location");
+                tagger.setStatus(false);
+                sleep(10);
+            } else {
+                vf.speak("No path found");
+                current_task = Task.EMPTY;
+            }
+        } else {
+            vf.speak("there are no tagged locations to return to");
             current_task = Task.EMPTY;
         }
-        // }
     }
 
     private void sendCoordinates(String type, float distance, float bearing, double azimuth)
