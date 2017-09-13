@@ -223,6 +223,7 @@ public class TheiaService extends Service implements
                 break;
             case HELP:
                 help();
+                break;
             case TRACK:
                 track();
                 break;
@@ -236,6 +237,7 @@ public class TheiaService extends Service implements
             case INDOOR:
                 outDoor = false;
                 current_task = Task.EMPTY;
+                break;
             case RESET:
                 break;
             case EMPTY:
@@ -275,14 +277,20 @@ public class TheiaService extends Service implements
 
     private void save(){
         vf.speak("save location");
+        current_task = Task.EMPTY;
+        sleep(10);
     }
 
     private void saveRet(){
         vf.speak("return to saved location");
+        current_task = Task.EMPTY;
+        sleep(10);
     }
 
     private void help(){
         vf.speak("help message instructions");
+        current_task = Task.EMPTY;
+        sleep(10);
     }
 
     private void track() {
