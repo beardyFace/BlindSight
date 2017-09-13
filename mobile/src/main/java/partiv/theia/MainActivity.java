@@ -172,12 +172,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                             sendTask(Task.INDOOR);
                             buttons[7].setText("Current mode: Indoor");
                             outDoor = false;
+                            Vf.speak("indoor mode activated");
                         }
                         else
                         {
                             sendTask(Task.OUTDOOR);
                             buttons[7].setText("Current mode: Outdoor");
                             outDoor = true;
+                            Vf.speak("outdoor mode activated");
                         }
                         customCanvas.setMode(outDoor);
 
