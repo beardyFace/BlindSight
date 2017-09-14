@@ -313,7 +313,7 @@ public class TheiaService extends Service implements
         else
         {
             azimuth = sensors.getAngle();
-            tracking.addPosition(current_position);
+            tracking.addPosition(new Position(current_position.getPosition(), current_position.getAngle()));
             vf.speak("Track");
             sendCoordinates("UPDATEI", current_position.getPosition().x, current_position.getPosition().y, azimuth);
             current_task = Task.EMPTY;
@@ -364,6 +364,15 @@ public class TheiaService extends Service implements
         Position current_loc = current_position;//pathing.getCurrent().getLocation();
         Position target_loc = pathing.getTarget();
 
+        if(current_loc.distanceTo(outDoor,target_loc) == 0)
+        {
+            pathing.next();
+        }
+
+        if(!outDoor)
+        {
+            this.azimuth = sensors.getAngle();
+        }
         double bearing = (current_loc.bearingTo(outDoor, target_loc) + 360) % 360;
         double azimuth = (this.azimuth + 360) % 360;
         double direction = Math.abs(azimuth - bearing);
@@ -371,13 +380,18 @@ public class TheiaService extends Service implements
         Log.d("Direction", Double.toString(direction));
         if((direction >= 340 && direction <= 359) || (direction >= 0 && direction < 20))
         {
-            if(current_loc.distanceTo(outDoor, target_loc) > 8 )
+            int index;
+            if(current_loc.distanceTo(outDoor, target_loc) > 4 )
             {
                 if(timeOut)
                 {
                     vf.speak("walk straight");
                 }
             }
+            /*else if((index = tracking.check(outDoor, current_position)) >= 0)
+            {
+                sendMessage("OVERSTEP," + Integer.toString(index));
+            }*/
             else
             {
                 if(!pathing.next())
@@ -385,7 +399,9 @@ public class TheiaService extends Service implements
                     vf.speak("Arrived at destination");
                     tagger.setStatus(false);
                     current_task = Task.EMPTY;
+                    return;
                 }
+                sendMessage("TRACKBACK");
             }
         }
         else
@@ -394,6 +410,7 @@ public class TheiaService extends Service implements
                 vf.speak(Integer.toString((int) direction) + " degrees");
             }
         }
+        sendCoordinates("MONITOR", current_position.getPosition().x, current_position.getPosition().y, azimuth);
         sleep(10);
     }
 

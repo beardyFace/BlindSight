@@ -29,7 +29,13 @@ public class Pathing {
             return false;
         }
         target = tracking.getPosition(index);
+        //tracking.removePosition(index + 1);
         return true;
+    }
+
+    public void decrement()
+    {
+        this.index--;
     }
 
     public Position getTarget()

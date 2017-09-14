@@ -291,6 +291,17 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 case "UPDATEI":
                     customCanvas.updateIndoor(Float.valueOf(data.get(1)), Float.valueOf(data.get(2)), Double.valueOf(data.get(3)));
                     customCanvas.invalidate();
+                    break;
+                case "MONITOR":
+                    customCanvas.monitor(Float.valueOf(data.get(1)), Float.valueOf(data.get(2)), Double.valueOf(data.get(3)));
+                    customCanvas.invalidate();
+                    break;
+                case "TRACKBACK":
+                    customCanvas.removeTrack();
+                    break;
+                case "OVERSTEP":
+                    customCanvas.overStepCorrection(Integer.valueOf(data.get(1)));
+                    break;
             }
         }
     }
