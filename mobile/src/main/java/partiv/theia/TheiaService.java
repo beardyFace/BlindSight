@@ -139,6 +139,8 @@ public class TheiaService extends Service implements
                         System.currentTimeMillis());
                 azimuth += geoField.getDeclination();
 
+                current_position = new Position(current_location, azimuth);
+
                 if (prev_location != null)
                 {
                     if(tagger.status()) {
@@ -249,7 +251,6 @@ public class TheiaService extends Service implements
         }
     }
 
-    private Position current;
     private void tag() {
         if (tracking == null) {
             tracking = new Tracking(sensors);
@@ -257,9 +258,9 @@ public class TheiaService extends Service implements
         //if(locationSamples >= Tagger.TAG_SAMPLE_SIZE) {
         if (outDoor)
         {
-            if (current_location != null) {
+            if (current_position != null) {
                 vf.speak("Location is tagged");
-                tagger.setLocation(current_location/*PL.average()*/);
+                tagger.setPosition(current_position);
                 prev_location = null;
                 sendMessage("TAG," + Double.toString(azimuth));
                 sleep(10);
@@ -269,11 +270,12 @@ public class TheiaService extends Service implements
         }
         else
         {
-            vf.speak("Location is tagged");
-            tagger.setStatus(true);
-            sendMessage("TAG," + Double.toString(azimuth));
-            current_position = new Position(new PointF(0, 0), azimuth);
-            sensors.setPosition(current_position);
+                vf.speak("Location is tagged");
+                current_position = new Position(new PointF(0, 0), azimuth);
+                tagger.setPosition(current_position);
+                sendMessage("TAG," + Double.toString(azimuth));
+                sensors.setPosition(current_position);
+                sleep(10);
         }
         //}
         current_task = Task.EMPTY;
@@ -322,17 +324,17 @@ public class TheiaService extends Service implements
     private void ret(){
         vf.speak("attempting to return");
         if (tagger.status()) {
-            if (pathing == null && tracking.getSize() > 0) {
-                sendCoordinates("RETURN", current_location.distanceTo(tagger.getLocation()), current_location.bearingTo(tagger.getLocation()), azimuth);
-                pathing = new Pathing(tracking, new Position(current_location, sensors.getAngle()));
-                current_task = Task.GUIDE;
-                vf.speak("returning to tagged location");
-                tagger.setStatus(false);
-                sleep(10);
-            } else {
-                vf.speak("No path found");
-                current_task = Task.EMPTY;
-            }
+                if (pathing == null && tracking.getSize() > 0) {
+                    sendCoordinates("RETURN", current_position.distanceTo(outDoor, tagger.getPosition()), current_position.bearingTo(outDoor, tagger.getPosition()), azimuth);
+                    pathing = new Pathing(tracking, current_position);
+                    current_task = Task.GUIDE;
+                    vf.speak("returning to tagged location");
+                    tagger.setStatus(false);
+                    sleep(10);
+                } else {
+                    vf.speak("No path found");
+                    current_task = Task.EMPTY;
+                }
         } else {
             vf.speak("there are no tagged locations to return to");
             current_task = Task.EMPTY;
@@ -359,17 +361,17 @@ public class TheiaService extends Service implements
             startTime = 0;
         }
 
-        Location current_loc = current_location;//pathing.getCurrent().getLocation();
-        Location target_loc = pathing.getTarget().getLocation();
+        Position current_loc = current_position;//pathing.getCurrent().getLocation();
+        Position target_loc = pathing.getTarget();
 
-        double bearing = (current_loc.bearingTo(target_loc) + 360) % 360;
+        double bearing = (current_loc.bearingTo(outDoor, target_loc) + 360) % 360;
         double azimuth = (this.azimuth + 360) % 360;
         double direction = Math.abs(azimuth - bearing);
-        Log.d("Bearing", Double.toString(current_loc.bearingTo(target_loc)));
+        Log.d("Bearing", Double.toString(current_loc.bearingTo(outDoor, target_loc)));
         Log.d("Direction", Double.toString(direction));
         if((direction >= 340 && direction <= 359) || (direction >= 0 && direction < 20))
         {
-            if(current_loc.distanceTo(target_loc) > 8 )
+            if(current_loc.distanceTo(outDoor, target_loc) > 8 )
             {
                 if(timeOut)
                 {

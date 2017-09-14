@@ -1,24 +1,21 @@
 package partiv.theia;
 
-import android.location.Location;
-import android.util.Log;
-
 public class Tagger{
     public static final int TAG_SAMPLE_SIZE = 5;
-    private Location tag_location;
+    private Position tag_location;
     private boolean status = false;
 
     Tagger()
     {
     }
 
-    public Location getLocation() {
+    public Position getPosition() {
         return tag_location;
     }
 
-    public void setLocation(Location location)
+    public void setPosition(Position position)
     {
-            this.tag_location = location;
+            this.tag_location = position;
             this.status = true;
     }
 

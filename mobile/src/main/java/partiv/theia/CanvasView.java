@@ -6,9 +6,12 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+
+import java.util.ArrayList;
 
 public class CanvasView extends View {
 
@@ -24,6 +27,7 @@ public class CanvasView extends View {
     private float bearing = 0;
     private float tagX, tagY, currX = 0, currY = 0;
     Context context;
+    private ArrayList<PointF> tracks = new ArrayList();
     private Paint mPaint;
 
     public CanvasView(Context c, AttributeSet attrs) {
@@ -45,11 +49,18 @@ public class CanvasView extends View {
         mPaint.setStrokeWidth(8f);
         canvas.drawPath(mPath, mPaint);
 
+        for(PointF f : tracks)
+        {
+            mPaint.setColor(Color.YELLOW);
+            canvas.drawCircle(f.x, f.y, 15, mPaint);
+        }
+
         mPaint.setColor(Color.GREEN);
         canvas.drawCircle(currX, currY, 15, mPaint);
 
         mPaint.setColor(Color.BLACK);
         mPaint.setTextSize(35);
+
         canvas.drawText("Outdoor: " + Boolean.toString(outDoor), 10, 150, mPaint);
         canvas.drawText("DistanceFromTag: " + Float.toString(distanceFromTag) + " m", 10, 50, mPaint);
         canvas.drawText("ChangeInBearing: " + Float.toString(bearing) + " degrees", 10, 100, mPaint);
@@ -86,8 +97,8 @@ public class CanvasView extends View {
         float dx = (float) Math.sin(Math.toRadians(this.azimuth)) * distance;
         float dy = (float) Math.cos(Math.toRadians(this.azimuth)) * distance;
 
-        dx = tagX + (dx * 10);
-        dy = tagY + (dy * 10);
+        dx = tagX + (dx * 20);
+        dy = tagY + (dy * 20);
         mPath.addCircle(dx, dy, 15, Path.Direction.CW);
         invalidate();
     }
@@ -98,10 +109,10 @@ public class CanvasView extends View {
         float dx = (float) Math.sin(Math.toRadians(this.azimuth)) * distance;
         float dy = (float) Math.cos(Math.toRadians(this.azimuth)) * distance;
 
-        currX += 10 * dx;
-        currY += 10 * dy;
+        currX += 20 * dx;
+        currY += 20 * dy;
 
-        distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2)) / 10;
+        distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2)) / 20;
         invalidate();
     }
 
@@ -110,53 +121,10 @@ public class CanvasView extends View {
         this.bearing = (bearing + 360) % 360;
         this.azimuth = (azimuth + 360 + offset) % 360;
 
-        currX = tagX - (10 * x);
-        currY = tagY - (10 * y);
-
+        currX = tagX - (20 * x);
+        currY = tagY - (20 * y);
+        tracks.add(new PointF(currX, currY));
         distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2));
         invalidate();
     }
-    /*private void drawArrowHead(Canvas canvas, Point tip, Point tail)
-    {
-        double dy = tip.y - tail.y;
-        double dx = tip.x - tail.x;
-        double theta = Math.atan2(dy, dx);
-        int tempX = tip.x ,tempY = tip.y;
-        //make arrow touch the circle
-        if(tip.x>tail.x && tip.y==tail.y)
-        {
-            tempX = (tip.x-10);
-        }
-        else if(tip.x<tail.x && tip.y==tail.y)
-        {
-            tempX = (tip.x+10);
-        }
-        else if(tip.y>tail.y && tip.x==tail.x)
-        {
-            tempY = (tip.y-10);
-        }
-        else if(tip.y<tail.y && tip.x==tail.x)
-        {
-            tempY = (tip.y+10);
-        }
-        else if(tip.x>tail.x || tip.x<tail.x)
-        {
-            int rCosTheta = (int) ((10)*Math.cos(theta)) ;
-            int xx = tip.x - rCosTheta;
-            int yy = (int) ((xx-tip.x)*(dy/dx) + tip.y);
-            tempX = xx;
-            tempY = yy;
-        }
-
-
-        double x, y, rho = theta + phi;
-        for(int j = 0; j < 2; j++)
-        {
-            x = tempX - arrowLength * Math.cos(rho);
-            y = tempY - arrowLength  * Math.sin(rho);
-
-            canvas.drawLine(tempX,tempY,(int)x,(int)y,this.paint);
-            rho = theta - phi;
-        }
-    }*/
 }

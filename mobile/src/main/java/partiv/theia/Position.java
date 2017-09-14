@@ -2,6 +2,7 @@ package partiv.theia;
 
 import android.graphics.PointF;
 import android.location.Location;
+import android.util.Log;
 
 public class Position {
 
@@ -19,6 +20,44 @@ public class Position {
     {
         this.position = position;
         this.angle = angle;
+    }
+
+    public float distanceTo(boolean outDoor, Position position)
+    {
+        if(outDoor)
+        {
+            return location.distanceTo(position.getLocation());
+        }
+        else
+        {
+            return calculateDistance(this.position.x, position.getPosition().x, this.position.y, position.getPosition().y);
+        }
+    }
+
+    public float bearingTo(boolean outDoor, Position position)
+    {
+        if(outDoor)
+        {
+            return location.bearingTo(position.getLocation());
+        }
+        else
+        {
+            return calculateBearing(this.position.x, position.getPosition().x, this.position.y, position.getPosition().y);
+        }
+    }
+
+    private float calculateDistance(float x1, float x2, float y1, float y2)
+    {
+        return (float) Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+    }
+
+    private float calculateBearing(float x1, float x2, float y1, float y2)
+    {
+        Log.d("X1", Float.toString(x1));
+        Log.d("X2", Float.toString(x2));
+        Log.d("Y1", Float.toString(y1));
+        Log.d("Y2", Float.toString(y2));
+        return (float) (Math.toDegrees(Math.atan(Math.tan((x2 - x1) / (y2 - y1)))) + 360) % 360;
     }
 
     public void setPosition(Location location, double angle)
