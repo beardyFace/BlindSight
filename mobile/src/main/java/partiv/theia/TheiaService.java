@@ -48,6 +48,7 @@ public class TheiaService extends Service implements
     private boolean newTask = true;
     private boolean outDoor = true;
     private ArrayList<Position> savedPath = new ArrayList<>();
+    private saveLocation saved;
     private Position savedPosition;
 
     private volatile boolean running = true;
@@ -283,12 +284,19 @@ public class TheiaService extends Service implements
 
     private void save(){
         vf.speak("save location");
+        if(saved == null) {
+            saved = new saveLocation();
+        }
+
+        saved.addSavedLocation(tagger.getPosition(), tracking);
+
         current_task = Task.EMPTY;
         sleep(10);
     }
 
     private void saveRet(){
         vf.speak("return to saved location");
+
         current_task = Task.EMPTY;
         sleep(10);
     }
