@@ -38,7 +38,7 @@ public class Position {
     {
         if(outDoor)
         {
-            return location.bearingTo(position.getLocation());
+            return (location.bearingTo(position.getLocation()) + 360) % 360;
         }
         else
         {

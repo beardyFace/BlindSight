@@ -35,7 +35,7 @@ public class TheiaService extends Service implements
     private Task current_task = Task.EMPTY;
     private Position current_position;
     private Location current_location;
-    private Location prev_location;
+    private Position prev_position;
     private Tagger tagger;
     private Haptic haptic;
     private Pathing pathing;
@@ -50,6 +50,8 @@ public class TheiaService extends Service implements
     private ArrayList<Position> savedPath = new ArrayList<>();
     private saveLocation saved;
     private Position savedPosition;
+
+    private double threshold = 4;
 
     private volatile boolean running = true;
     private final Object lockObj = new Object();
@@ -142,11 +144,11 @@ public class TheiaService extends Service implements
 
                 current_position = new Position(current_location, azimuth);
 
-                if (prev_location != null)
+                if (prev_position != null)
                 {
-                    sendCoordinates("UPDATE", prev_location.distanceTo(current_location), prev_location.bearingTo(current_location), azimuth);
+                    sendCoordinates("UPDATE", prev_position.distanceTo(outDoor, current_position), prev_position.bearingTo(outDoor, current_position), azimuth);
                     if(tagger.status()) {
-                        distance += prev_location.distanceTo(current_location);
+                        distance += prev_position.distanceTo(outDoor, current_position);
                         if (distance >= 3) {
                             current_task = Task.TRACK;
                             distance = 0;
@@ -157,7 +159,7 @@ public class TheiaService extends Service implements
                         }
                     }
                 }
-                prev_location = current_location;
+                prev_position = current_position;
                 //locationSamples++;
                 Log.d("Lattitude", Double.toString(location.getLatitude()));
                 Log.d("Longditude", Double.toString(location.getLongitude()));
@@ -278,7 +280,7 @@ public class TheiaService extends Service implements
             if (current_position != null) {
                 vf.speak("Location is tagged");
                 tagger.setPosition(current_position);
-                prev_location = null;
+                prev_position = null;
                 sendMessage("TAG," + Double.toString(azimuth));
                 sleep(10);
             } else{
@@ -379,7 +381,7 @@ public class TheiaService extends Service implements
             startTime = System.nanoTime();
         }
 
-        if(System.nanoTime() - startTime >= 3000000000L)
+        if(System.nanoTime() - startTime >= 5000000000L)
         {
             timeOut = true;
             startTime = 0;
@@ -404,19 +406,49 @@ public class TheiaService extends Service implements
         Log.d("Direction", Double.toString(direction));
 
         int index;
-        if(current_loc.distanceTo(outDoor, target_loc) > 2)
+        if(current_loc.distanceTo(outDoor, target_loc) > threshold)
         {
-            if((direction >= 340 && direction <= 359) || (direction >= 0 && direction < 20))
+            if((direction >= 337.5 && direction <= 359) || (direction >= 0 && direction < 22.5))
             {
                 if(timeOut)
                 {
-                    vf.speak("walk straight");
+                    vf.speak("head north for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)));
                 }
             }
             else
             {
-                if(timeOut) {
-                    vf.speak(Integer.toString((int) direction) + " degrees");
+                if(timeOut)
+                {
+                    //vf.speak(Integer.toString((int) direction) + " degrees");
+                    if(direction >= 22.5 && direction < 67.5)
+                    {
+                        vf.speak("head north east for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)) + " metres");
+                    }
+                    else if(direction >= 67.5 && direction < 112.5)
+                    {
+                        vf.speak("head east for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)) + " metres");
+                    }
+                    else if(direction >= 112.5 && direction < 157.5)
+                    {
+                        vf.speak("head south east for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)) + " metres");
+                    }
+                    else if(direction >= 157.5 && direction < 202.5)
+                    {
+                        vf.speak("head south for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)) + " metres");
+                    }
+                    else if(direction >= 202.5 && direction < 247.5)
+                    {
+                        vf.speak("head south west for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)) + " metres");
+                    }
+                    else if(direction >= 247.5 && direction < 292.5)
+                    {
+                        vf.speak("head west for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)) + " metres");
+                    }
+                    else if(direction >= 292.5 && direction < 337.5)
+                    {
+                        vf.speak("head north west for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)) + " metres");
+                    }
+
                 }
             }
         }

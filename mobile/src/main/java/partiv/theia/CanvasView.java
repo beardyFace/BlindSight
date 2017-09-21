@@ -25,6 +25,7 @@ public class CanvasView extends View {
     private double offset = 0;
     private double azimuth = 0;
     private float bearing = 0;
+    private float bOffset = 0;
     private float tagX, tagY, currX = 0, currY = 0;
     Context context;
     private ArrayList<PointF> tracks = new ArrayList();
