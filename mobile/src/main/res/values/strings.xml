@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Theia</string>
+    <string name="title_activity_selectloc">selectloc</string>
 </resources>

@@ -7,11 +7,13 @@
     android:columnCount="2"
     android:rowCount="6"
     android:background="@mipmap/theia_bg2">
+
     <Button
         android:id="@+id/button1"
-        android:text="Tag Location"
+        android:text="Location One"
         android:textColor="#000000"
-        android:background="@drawable/rounded_rectangle"        android:layout_width="0dp"
+        android:background="@drawable/rounded_rectangle"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="10dp"
         android:layout_columnWeight="1"
@@ -19,11 +21,20 @@
         android:layout_row="0"
         android:layout_column="0" />
 
+    <!--<Button
+        android:id="@+id/button1"
+        android:text="Location One"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:background="@drawable/round_button"
+        android:textColor="#fff" />-->
+
     <Button
         android:id="@+id/button2"
-        android:text="Save Location"
+        android:text="Location Two"
         android:textColor="#000000"
-        android:background="@drawable/rounded_rectangle"        android:layout_width="0dp"
+        android:background="@drawable/rounded_rectangle"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="10dp"
         android:layout_columnWeight="1"
@@ -32,9 +43,10 @@
         android:layout_column="1"/>
     <Button
         android:id="@+id/button3"
-        android:text="Return to tagged location"
+        android:text="Location Three"
         android:textColor="#000000"
-        android:background="@drawable/rounded_rectangle"        android:layout_width="0dp"
+        android:background="@drawable/rounded_rectangle"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="10dp"
         android:layout_columnWeight="1"
@@ -44,20 +56,23 @@
     />
     <Button
         android:id="@+id/button4"
-        android:text="Return to saved location"
+        android:text="Location Four"
         android:textColor="#000000"
-        android:background="@drawable/rounded_rectangle"        android:layout_width="0dp"
+        android:background="@drawable/rounded_rectangle"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="10dp"
         android:layout_columnWeight="1"
         android:layout_rowWeight="1"
         android:layout_row="1"
         android:layout_column="1" />
+
     <Button
         android:id="@+id/button5"
-        android:text="Select Locations"
+        android:text="Location Five"
         android:textColor="#000000"
-        android:background="@drawable/rounded_rectangle"        android:layout_width="0dp"
+        android:background="@drawable/rounded_rectangle"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="10dp"
         android:layout_columnWeight="1"
@@ -66,9 +81,10 @@
         android:layout_column="0" />
     <Button
         android:id="@+id/button6"
-        android:text="Reset"
+        android:text="Location Six"
         android:textColor="#000000"
-        android:background="@drawable/rounded_rectangle"        android:layout_width="0dp"
+        android:background="@drawable/rounded_rectangle"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="10dp"
         android:layout_columnWeight="1"
@@ -78,9 +94,10 @@
 
     <Button
         android:id="@+id/button7"
-        android:text="Help"
+        android:text="Change Name Of Selected Location"
         android:textColor="#000000"
-        android:background="@drawable/rounded_rectangle"        android:layout_width="0dp"
+        android:background="@drawable/rounded_rectangle"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="10dp"
         android:layout_columnSpan="1"
@@ -90,9 +107,10 @@
         android:layout_column="0" />
     <Button
         android:id="@+id/button8"
-        android:text="Change mode to indoor"
+        android:text="Help"
         android:textColor="#000000"
-        android:background="@drawable/rounded_rectangle"        android:layout_width="0dp"
+        android:background="@drawable/rounded_rectangle"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="10dp"
         android:layout_columnSpan="1"
@@ -100,6 +118,7 @@
         android:layout_columnWeight="1"
         android:layout_row="3"
         android:layout_column="1" />
+
     <Button
         android:id="@+id/button9"
         android:text="Voice"
@@ -113,7 +132,6 @@
         android:layout_columnWeight="1"
         android:layout_row="4"
         android:layout_column="0" />
-
     <ProgressBar
         android:id="@+id/progressBar1"
         style="?android:attr/progressBarStyleHorizontal"
@@ -124,4 +142,5 @@
         android:layout_gravity="center"
         android:layout_row="5"
         android:layout_column="0"/>
-</GridLayout>
+
+    </GridLayout>

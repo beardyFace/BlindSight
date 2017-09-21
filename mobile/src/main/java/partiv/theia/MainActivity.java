@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     ViewPager vp;
     private Button buttons[] = new Button[9];
     private ProgressBar pBar;
-    public int[] locations;
+    public static int selectedLoc = 1;
     private View pages[] = new View[2];
 
     Messenger mService = null;
@@ -161,6 +161,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         break;
                     case R.id.button5:
                         //select locations
+                        Intent i = new Intent(MainActivity.this,selectloc.class);
+                        startActivity(i);
                         break;
                     case R.id.button6:
                         break;
@@ -308,5 +310,4 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
         }
     }
-
 }
