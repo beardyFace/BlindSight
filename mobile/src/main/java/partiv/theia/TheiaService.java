@@ -144,6 +144,7 @@ public class TheiaService extends Service implements
 
                 if (prev_location != null)
                 {
+                    sendCoordinates("UPDATE", prev_location.distanceTo(current_location), prev_location.bearingTo(current_location), azimuth);
                     if(tagger.status()) {
                         distance += prev_location.distanceTo(current_location);
                         if (distance >= 3) {
@@ -152,9 +153,9 @@ public class TheiaService extends Service implements
                             synchronized (lockObj) {
                                 lockObj.notify();
                             }
+                            sendMessage("TRACKLOCATION");
                         }
                     }
-                    sendCoordinates("UPDATE", prev_location.distanceTo(current_location), prev_location.bearingTo(current_location), azimuth);
                 }
                 prev_location = current_location;
                 //locationSamples++;
@@ -436,7 +437,11 @@ public class TheiaService extends Service implements
             }
             sendMessage("TRACKBACK");
         }
-        sendCoordinates("MONITOR", current_position.getPosition().x, current_position.getPosition().y, azimuth);
+
+        if(!outDoor)
+        {
+            sendCoordinates("MONITOR", current_position.getPosition().x, current_position.getPosition().y, azimuth);
+        }
         sleep(10);
     }
 

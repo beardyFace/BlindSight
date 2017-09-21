@@ -292,15 +292,15 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     break;
                 case "UPDATE":
                     customCanvas.updatesLocation(Float.valueOf(data.get(1)), Float.valueOf(data.get(2)), Double.valueOf(data.get(3)));
-                    customCanvas.invalidate();
                     break;
                 case "UPDATEI":
                     customCanvas.updateIndoor(Float.valueOf(data.get(1)), Float.valueOf(data.get(2)), Double.valueOf(data.get(3)));
-                    customCanvas.invalidate();
                     break;
                 case "MONITOR":
                     customCanvas.monitor(Float.valueOf(data.get(1)), Float.valueOf(data.get(2)), Double.valueOf(data.get(3)));
-                    customCanvas.invalidate();
+                    break;
+                case "TRACKLOCATION":
+                    customCanvas.updateTrackLocation();
                     break;
                 case "TRACKBACK":
                     customCanvas.removeTrack();
@@ -310,7 +310,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     break;
                 case "RESET":
                     customCanvas.reset();
-                    customCanvas.invalidate();
             }
         }
     }
