@@ -1,6 +1,7 @@
 package partiv.theia;
 
 import android.content.Context;
+import android.provider.Settings;
 import android.util.Log;
 
 import java.io.IOException;
