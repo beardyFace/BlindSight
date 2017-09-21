@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private int current_id;
     LayoutInflater inflater;
     ViewPager vp;
-    private Button buttons[] = new Button[8];
+    private Button buttons[] = new Button[9];
     private ProgressBar pBar;
     public int[] locations;
     private View pages[] = new View[2];
@@ -160,29 +160,32 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         sendTask(Task.RETURN2);
                         break;
                     case R.id.button5:
-                        sendTask(Task.HELP);
+                        //select locations
                         break;
                     case R.id.button6:
                         break;
                     case R.id.button7:
-                        displaySpeechRecognizer();
+                        sendTask(Task.HELP);
                         break;
                     case R.id.button8:
                         if(outDoor) {
                             sendTask(Task.INDOOR);
-                            buttons[7].setText("Current mode: Indoor");
+                            buttons[7].setText("Change mode to Outdoor");
                             outDoor = false;
                             Vf.speak("indoor mode activated");
                         }
                         else
                         {
                             sendTask(Task.OUTDOOR);
-                            buttons[7].setText("Current mode: Outdoor");
+                            buttons[7].setText("Change mode to Indoor");
                             outDoor = true;
                             Vf.speak("outdoor mode activated");
                         }
                         customCanvas.setMode(outDoor);
-
+                        break;
+                    case R.id.button9:
+                        displaySpeechRecognizer();
+                        break;
                     default:
                         break;
                 }

@@ -374,41 +374,42 @@ public class TheiaService extends Service implements
             this.azimuth = sensors.getAngle();
         }
         double bearing = (current_loc.bearingTo(outDoor, target_loc) + 360) % 360;
-        double azimuth = (this.azimuth + 360) % 360;
         double direction = Math.abs(azimuth - bearing);
+        Log.d("Azimuth", Double.toString(azimuth));
         Log.d("Bearing", Double.toString(current_loc.bearingTo(outDoor, target_loc)));
         Log.d("Direction", Double.toString(direction));
-        if((direction >= 340 && direction <= 359) || (direction >= 0 && direction < 20))
+
+        int index;
+        if(current_loc.distanceTo(outDoor, target_loc) > 4 )
         {
-            int index;
-            if(current_loc.distanceTo(outDoor, target_loc) > 4 )
+            if((direction >= 340 && direction <= 359) || (direction >= 0 && direction < 20))
             {
                 if(timeOut)
                 {
                     vf.speak("walk straight");
                 }
             }
+            else
+            {
+                if(timeOut) {
+                    vf.speak(Integer.toString((int) direction) + " degrees");
+                }
+            }
+        }
             /*else if((index = tracking.check(outDoor, current_position)) >= 0)
             {
                 sendMessage("OVERSTEP," + Integer.toString(index));
             }*/
-            else
-            {
-                if(!pathing.next())
-                {
-                    vf.speak("Arrived at destination");
-                    tagger.setStatus(false);
-                    current_task = Task.EMPTY;
-                    return;
-                }
-                sendMessage("TRACKBACK");
-            }
-        }
         else
         {
-            if(timeOut) {
-                vf.speak(Integer.toString((int) direction) + " degrees");
+            if(!pathing.next())
+            {
+                vf.speak("Arrived at destination");
+                tagger.setStatus(false);
+                current_task = Task.EMPTY;
+                return;
             }
+            sendMessage("TRACKBACK");
         }
         sendCoordinates("MONITOR", current_position.getPosition().x, current_position.getPosition().y, azimuth);
         sleep(10);
