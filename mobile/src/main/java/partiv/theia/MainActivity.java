@@ -163,6 +163,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         //select locations
                         break;
                     case R.id.button6:
+                        sendTask(Task.RESET);
                         break;
                     case R.id.button7:
                         sendTask(Task.HELP);
@@ -305,6 +306,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 case "OVERSTEP":
                     customCanvas.overStepCorrection(Integer.valueOf(data.get(1)));
                     break;
+                case "RESET":
+                    customCanvas.reset();
+                    customCanvas.invalidate();
             }
         }
     }

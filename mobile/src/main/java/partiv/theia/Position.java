@@ -57,7 +57,7 @@ public class Position {
         Log.d("Y1", Float.toString(y1));
         Log.d("X2", Float.toString(x2));
         Log.d("Y2", Float.toString(y2));
-        return (float) ((Math.toDegrees(Math.atan2((y1 - y2), (x1 - x2)))) + 360 + 90) % 360;
+        return (float) ((Math.toDegrees(Math.atan2((y1 - y2), (x1 - x2)))) + 360) % 360;
     }
 
     public void setPosition(Location location, double angle)

@@ -124,7 +124,7 @@ public class CanvasView extends View {
         currX = tagX - (20 * x);
         currY = tagY - (20 * y);
         tracks.add(new PointF(currX, currY));
-        distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2));
+        distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2) / 20);
     }
 
     public void monitor(float x, float y, double azimuth)
@@ -134,12 +134,13 @@ public class CanvasView extends View {
 
         currX = tagX - (20 * x);
         currY = tagY - (20 * y);
-        distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2));
+        distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2) / 20);
     }
 
     public void removeTrack()
     {
         tracks.remove(tracks.size() - 1);
+        invalidate();
     }
 
     public void overStepCorrection(int x)
@@ -148,5 +149,16 @@ public class CanvasView extends View {
         {
             tracks.remove(i);
         }
+    }
+
+    public void reset()
+    {
+        azimuth = 0;
+        bearing = 0;
+        currX = 0;
+        currY = 0;
+        distanceFromTag = 0;
+        mPath.reset();
+        tracks.clear();
     }
 }

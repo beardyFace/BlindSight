@@ -200,7 +200,7 @@ public class TheiaService extends Service implements
         @Override
         public void handleMessage(Message msg) {
             replyMessanger = msg.replyTo;
-            if(current_task == Task.EMPTY || current_task == Task.TRACK)
+            if(current_task == Task.EMPTY || current_task == Task.TRACK || Task.getTask(msg.what) == Task.RESET)
             {
                 current_task = Task.getTask(msg.what);
                 newTask = true;
@@ -237,19 +237,34 @@ public class TheiaService extends Service implements
                 break;
             case OUTDOOR:
                 outDoor = true;
+                reset();
                 current_task = Task.EMPTY;
                 break;
             case INDOOR:
                 outDoor = false;
+                reset();
                 current_task = Task.EMPTY;
                 break;
             case RESET:
+                reset();
+                vf.speak("reset completed");
                 break;
             case EMPTY:
                 break;
             default:
                 break;
         }
+    }
+
+    private void reset()
+    {
+        tagger.setStatus(false);
+        tracking = null;
+        pathing = null;
+        current_position = null;
+        current_location = null;
+        current_task = Task.EMPTY;
+        sendMessage("RESET");
     }
 
     private void tag() {
@@ -388,7 +403,7 @@ public class TheiaService extends Service implements
         Log.d("Direction", Double.toString(direction));
 
         int index;
-        if(current_loc.distanceTo(outDoor, target_loc) > 4 )
+        if(current_loc.distanceTo(outDoor, target_loc) > 2)
         {
             if((direction >= 340 && direction <= 359) || (direction >= 0 && direction < 20))
             {
@@ -415,6 +430,8 @@ public class TheiaService extends Service implements
                 vf.speak("Arrived at destination");
                 tagger.setStatus(false);
                 current_task = Task.EMPTY;
+                sendMessage("TRACKBACK");
+                sleep(10);
                 return;
             }
             sendMessage("TRACKBACK");
