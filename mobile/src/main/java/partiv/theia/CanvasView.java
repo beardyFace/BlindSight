@@ -114,6 +114,14 @@ public class CanvasView extends View {
         currY += 20 * dy;
 
         distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2)) / 20;
+
+        invalidate();
+    }
+
+    public void updateTrackLocation()
+    {
+        tracks.add(new PointF(currX, currY));
+        invalidate();
     }
 
     public void updateIndoor(float x, float y, double azimuth)
@@ -125,6 +133,7 @@ public class CanvasView extends View {
         currY = tagY - (20 * y);
         tracks.add(new PointF(currX, currY));
         distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2) / 20);
+        invalidate();
     }
 
     public void monitor(float x, float y, double azimuth)
@@ -135,6 +144,7 @@ public class CanvasView extends View {
         currX = tagX - (20 * x);
         currY = tagY - (20 * y);
         distanceFromTag = (float) Math.sqrt(Math.pow(currX - tagX, 2) + Math.pow(currY - tagY, 2) / 20);
+        invalidate();
     }
 
     public void removeTrack()
@@ -160,5 +170,6 @@ public class CanvasView extends View {
         distanceFromTag = 0;
         mPath.reset();
         tracks.clear();
+        invalidate();
     }
 }

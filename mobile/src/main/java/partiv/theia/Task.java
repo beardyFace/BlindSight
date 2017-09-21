@@ -12,11 +12,11 @@ import java.util.Collections;
         RETURN(3, "return"),
         TRACK(4),
         GUIDE(5),
-        OUTDOOR(6),
-        INDOOR(7),
+        OUTDOOR(6, "change mode"),
+        INDOOR(7, "change mode"),
         RESET(8, "reset"),
         RETURN2(9, "save return"),
-        HELP(10);
+        HELP(10, "help");
 
 
     private final ArrayList<String> task_names = new ArrayList<String>();
