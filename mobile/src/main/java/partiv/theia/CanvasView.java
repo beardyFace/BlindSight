@@ -43,11 +43,9 @@ public class CanvasView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        mPaint.setColor(Color.RED);
         mPaint.setStyle(Paint.Style.FILL);
         mPaint.setStrokeJoin(Paint.Join.ROUND);
         mPaint.setStrokeWidth(8f);
-        canvas.drawPath(mPath, mPaint);
 
         for(PointF f : tracks)
         {
@@ -57,6 +55,9 @@ public class CanvasView extends View {
 
         mPaint.setColor(Color.GREEN);
         canvas.drawCircle(currX, currY, 15, mPaint);
+
+        mPaint.setColor(Color.RED);
+        canvas.drawPath(mPath, mPaint);
 
         mPaint.setColor(Color.BLACK);
         mPaint.setTextSize(35);
@@ -84,7 +85,7 @@ public class CanvasView extends View {
         tagY = height/2;
         currY = tagY;
         this.azimuth = 180;
-        this.offset = 180 - (azimuth + 360) % 360;
+        this.offset = (180 - azimuth + 360) % 360;
         mPath.moveTo(tagX, tagY);
         mPath.addCircle(tagX, tagY, 15, Path.Direction.CW);
         invalidate();
@@ -92,8 +93,8 @@ public class CanvasView extends View {
 
     public void drawRet(float distance, float bearing, double azimuth)
     {
-        this.bearing = (bearing + 360) % 360;
-        this.azimuth = (azimuth + 360 + offset) % 360;
+        this.bearing = bearing;
+        this.azimuth = (azimuth + offset + 360) % 360;
         float dx = (float) Math.sin(Math.toRadians(this.azimuth)) * distance;
         float dy = (float) Math.cos(Math.toRadians(this.azimuth)) * distance;
 
@@ -104,8 +105,8 @@ public class CanvasView extends View {
     }
 
     public void updatesLocation(float distance, float bearing, double azimuth) {
-        this.bearing = (bearing + 360) % 360;
-        this.azimuth = (azimuth + 360 + offset) % 360;
+        this.bearing = bearing;
+        this.azimuth = (azimuth + offset + 360) % 360;
         float dx = (float) Math.sin(Math.toRadians(this.azimuth)) * distance;
         float dy = (float) Math.cos(Math.toRadians(this.azimuth)) * distance;
 
@@ -117,8 +118,8 @@ public class CanvasView extends View {
 
     public void updateIndoor(float x, float y, double azimuth)
     {
-        this.bearing = (bearing + 360) % 360;
-        this.azimuth = (azimuth + 360 + offset) % 360;
+        this.bearing = bearing;
+        this.azimuth = (azimuth + offset + 360) % 360;
 
         currX = tagX - (20 * x);
         currY = tagY - (20 * y);
@@ -128,8 +129,8 @@ public class CanvasView extends View {
 
     public void monitor(float x, float y, double azimuth)
     {
-        this.bearing = (bearing + 360) % 360;
-        this.azimuth = (azimuth + 360 + offset) % 360;
+        this.bearing = bearing;
+        this.azimuth = (azimuth + offset + 360) % 360;
 
         currX = tagX - (20 * x);
         currY = tagY - (20 * y);

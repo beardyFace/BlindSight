@@ -54,10 +54,10 @@ public class Position {
     private float calculateBearing(float x1, float x2, float y1, float y2)
     {
         Log.d("X1", Float.toString(x1));
-        Log.d("X2", Float.toString(x2));
         Log.d("Y1", Float.toString(y1));
+        Log.d("X2", Float.toString(x2));
         Log.d("Y2", Float.toString(y2));
-        return (float) (Math.toDegrees(Math.atan(Math.tan((x2 - x1) / (y2 - y1)))) + 360) % 360;
+        return (float) ((Math.toDegrees(Math.atan2((y1 - y2), (x1 - x2)))) + 360 + 90) % 360;
     }
 
     public void setPosition(Location location, double angle)

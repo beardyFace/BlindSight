@@ -91,7 +91,7 @@ public class Sensors implements SensorEventListener//, StepListener
         {
             SensorManager.getOrientation(rotationMatrix, orientation);
             azimuth = (float) Math.toDegrees(orientation[0]);
-            //azimuth = (azimuth + 360) % 360;
+            azimuth = (azimuth + 360) % 360;
             pitch = orientation[1] + Math.PI;
             roll = orientation[2] + Math.PI;
             //Log.d("Orientation", Double.toString(azimuth) + " " + Double.toString(Math.toDegrees(pitch)) + " " + Double.toString(Math.toDegrees(roll)));
@@ -121,8 +121,8 @@ public class Sensors implements SensorEventListener//, StepListener
         if(position != null) {
             float x, y;
             double angle;
-            x = (float) (position.getPosition().x + STEP_SIZE * Math.sin(Math.toRadians((azimuth + 360) % 360)));
-            y = (float) (position.getPosition().y + STEP_SIZE * Math.cos(Math.toRadians((azimuth + 360) % 360)));
+            x = (float) (position.getPosition().x + STEP_SIZE * Math.sin(Math.toRadians(azimuth)));
+            y = (float) (position.getPosition().y + STEP_SIZE * Math.cos(Math.toRadians(azimuth)));
             PointF p = new PointF(x, y);
             angle = Math.abs(position.getAngle() - azimuth);
             position.setPosition(p, angle);
