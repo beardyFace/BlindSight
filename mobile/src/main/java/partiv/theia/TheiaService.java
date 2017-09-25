@@ -406,13 +406,14 @@ public class TheiaService extends Service implements
         Log.d("Direction", Double.toString(direction));
 
         int index;
-        if(current_loc.distanceTo(outDoor, target_loc) > threshold)
+        double distance = current_loc.distanceTo(outDoor, target_loc);
+        if(distance > threshold)
         {
             if((direction >= 337.5 && direction <= 359) || (direction >= 0 && direction < 22.5))
             {
                 if(timeOut)
                 {
-                    vf.speak("head north for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)));
+                    vf.speak("head north for " + Double.toString(Math.round(distance)));
                 }
             }
             else
@@ -422,31 +423,31 @@ public class TheiaService extends Service implements
                     //vf.speak(Integer.toString((int) direction) + " degrees");
                     if(direction >= 22.5 && direction < 67.5)
                     {
-                        vf.speak("head north east for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)) + " metres");
+                        vf.speak("head north east for " + Double.toString(Math.round(distance)) + " metres");
                     }
                     else if(direction >= 67.5 && direction < 112.5)
                     {
-                        vf.speak("head east for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)) + " metres");
+                        vf.speak("head east for " + Double.toString(Math.round(distance)) + " metres");
                     }
                     else if(direction >= 112.5 && direction < 157.5)
                     {
-                        vf.speak("head south east for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)) + " metres");
+                        vf.speak("head south east for " + Double.toString(Math.round(distance)) + " metres");
                     }
                     else if(direction >= 157.5 && direction < 202.5)
                     {
-                        vf.speak("head south for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)) + " metres");
+                        vf.speak("head south for " + Double.toString(Math.round(distance)) + " metres");
                     }
                     else if(direction >= 202.5 && direction < 247.5)
                     {
-                        vf.speak("head south west for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)) + " metres");
+                        vf.speak("head south west for " + Double.toString(Math.round(distance)) + " metres");
                     }
                     else if(direction >= 247.5 && direction < 292.5)
                     {
-                        vf.speak("head west for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)) + " metres");
+                        vf.speak("head west for " + Double.toString(Math.round(distance)) + " metres");
                     }
                     else if(direction >= 292.5 && direction < 337.5)
                     {
-                        vf.speak("head north west for " + Double.toString(current_loc.distanceTo(outDoor, target_loc)) + " metres");
+                        vf.speak("head north west for " + Double.toString(Math.round(distance)) + " metres");
                     }
 
                 }
