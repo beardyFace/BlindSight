@@ -4,6 +4,7 @@ import android.location.Location;
 
 import java.util.ArrayList;
 
+// This class averages the locations that are received by the gps services
 public class ProcessLocation {
 
     private ArrayList<Double> lats = new ArrayList<Double>();

@@ -1,5 +1,6 @@
 package partiv.theia;
 
+// This class stores the user's tagged position and their tag's status
 public class Tagger{
     public static final int TAG_SAMPLE_SIZE = 5;
     private Position tag_location;

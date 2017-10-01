@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private Button buttons[] = new Button[9];
     private ProgressBar pBar;
     public static int selectedLoc = 1;
+	// the pages of the app
     private View pages[] = new View[2];
 
     Messenger mService = null;
@@ -53,14 +54,17 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+		// use inflater to get the instances of the two pages
         inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         vp = (ViewPager)findViewById(R.id.viewPager);
         vp.setAdapter(new MyPagesAdapter());
         pages[0] = inflater.inflate(R.layout.swipe1, null);
         pages[1] = inflater.inflate(R.layout.swipe2, null);
+		// initiate the buttons and timers
         initButtons();
         initTimer();
         Vf = new VoiceFeedback(this);
+		// bind service with the main activity
         bindService(new Intent(this, TheiaService.class), connection, Context.BIND_AUTO_CREATE);
         customCanvas = pages[1].findViewById(R.id.signature_canvas);
     }
@@ -116,6 +120,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     private void initButtons()
     {
+		// set touch listner for all buttons
         for(int i = 0; i < buttons.length; i++)
         {
             String buttonID = "button" + (i + 1);
@@ -129,6 +134,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     private void initTimer()
     {
+		// create countdown timer for button activation with 2 second period
         mCountDownTimer = new CountDownTimer(2000,200)
         {
             @Override
@@ -140,6 +146,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
             }
 
+			// when the timer times out send the task to the Theia service for processing
             @Override
             public void onFinish()
             {
@@ -212,6 +219,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		// get the task based on the user's voice command and send it to the Theia service for execution
         if (requestCode == SPEECH_REQUEST_CODE && resultCode == RESULT_OK) {
             ArrayList<String> voice_results = data.getStringArrayListExtra(
                     RecognizerIntent.EXTRA_RESULTS);
@@ -221,6 +229,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+	// This function sends a task to the theia service for execution
     private void sendTask(Task task)
     {
         if (!isBound) return;
@@ -240,7 +249,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         {
             Log.d("TouchTest", "Touch down");
             if(!start) {
+				// annouce button name
                 Vf.speak(((Button) pages[0].findViewById(current_id)).getText().toString());
+				// start timer
                 mCountDownTimer.start();
                 start = true;
             }
@@ -250,6 +261,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             Log.d("TouchTest", "Touch up");
             i = 0;
             if(start) {
+				// reset timer
                 mCountDownTimer.cancel();
                 start = false;
             }
@@ -277,12 +289,15 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     private Messenger replyMessenger = new Messenger(new HandlerReplyMsg());
 
+	// this sub class handles the reply from the Theia service
     private class HandlerReplyMsg extends Handler {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             String recdMessage = msg.obj.toString(); //msg received from service
+			// split the message by comma into list of strings to get the different data seperately
             List<String> data = Arrays.asList(recdMessage.split(","));
+			// execute the debugger's command based on the type of data being send
             switch(data.get(0)) {
                 case "TAG":
                     customCanvas.drawTag(Double.valueOf(data.get(1)));

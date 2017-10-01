@@ -1,5 +1,6 @@
 package partiv.theia;
 
+// Pathing class uses the tracked points and iterate through them
 public class Pathing {
     private Position target;
     private Position current;
@@ -13,16 +14,19 @@ public class Pathing {
         this.target = tracking.getPosition(index);
     }
 
+	// get the current position
     public Position getCurrent()
     {
         return this.current;
     }
 
+	// set the current position
     public void setCurrent(Position current)
     {
         this.current = current;
     }
 
+	// move to the next target on the tracks
     public boolean next() {
         if(--index == -1)
         {
@@ -33,11 +37,13 @@ public class Pathing {
         return true;
     }
 
+	// decrement index
     public void decrement()
     {
         this.index--;
     }
 
+	// get the current target
     public Position getTarget()
     {
         return this.target;

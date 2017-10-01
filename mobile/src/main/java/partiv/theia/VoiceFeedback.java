@@ -4,6 +4,7 @@ import android.speech.tts.TextToSpeech;
 
 import java.util.Locale;
 
+// This class provides a voice feedback 
 public class VoiceFeedback {
 
     private TextToSpeech t1;

@@ -5,7 +5,6 @@ public class StepDetector {
     private static final int ACCEL_RING_SIZE = 50;
     private static final int VEL_RING_SIZE = 10;
 
-    // change this threshold according to your sensitivity preferences
     private static final float STEP_THRESHOLD = 25f;
 
     private static final int STEP_DELAY_NS = 250000000;
@@ -32,7 +31,6 @@ public class StepDetector {
         currentAccel[1] = y;
         currentAccel[2] = z;
 
-        // First step is to update our guess of where the global z vector is.
         accelRingCounter++;
         accelRingX[accelRingCounter % ACCEL_RING_SIZE] = currentAccel[0];
         accelRingY[accelRingCounter % ACCEL_RING_SIZE] = currentAccel[1];

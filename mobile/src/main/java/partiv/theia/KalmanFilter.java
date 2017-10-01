@@ -9,13 +9,15 @@ public class KalmanFilter {
     private float Q_metres_per_second;
 
     private String provider;
+	private Sensors sensors;
     private long timeStamp_milliseconds;
     private double lat;
     private double lng;
     private float variance; // P matrix.  Negative means object uninitialised.  NB: units irrelevant, as long as same units used throughout
 
-    public KalmanFilter(float Q_metres_per_second) {
+    public KalmanFilter(float Q_metres_per_second, Sensors sensors) {
         this.Q_metres_per_second = Q_metres_per_second;
+		this.sensors = sensors;
         variance = -1;
     }
 
@@ -69,7 +71,8 @@ public class KalmanFilter {
                 // time has moved on, so the uncertainty in the current position increases
                 variance += timeInc_milliseconds * Q_metres_per_second * Q_metres_per_second / 1000;
                 this.timeStamp_milliseconds = timeStamp_milliseconds;
-                // TO DO: USE VELOCITY INFORMATION HERE TO GET A BETTER ESTIMATE OF CURRENT POSITION
+				// add the changes in accelerometer using step detection to the variance
+				variance += sensors.getSteps() * STEP_SIZE;
             }
 
             // Kalman gain matrix K = Covarariance * Inverse(Covariance + MeasurementVariance)

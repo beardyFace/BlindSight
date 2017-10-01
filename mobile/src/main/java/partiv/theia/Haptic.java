@@ -5,6 +5,7 @@ import android.os.Build;
 import android.os.Vibrator;
 import android.os.VibrationEffect;
 
+// this class provides a haptic feedback
 public class Haptic {
 
     private Context context;
